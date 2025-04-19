@@ -1,13 +1,98 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import { useState } from 'react';
+import { Outlet, useParams, useLocation } from 'react-router-dom';
+import { ThemeProvider } from '@/components/theme/theme-provider';
+import Sidebar from '@/components/layout/sidebar';
+import Header from '@/components/layout/header';
+import EmailCard from '@/components/emails/email-card';
+import StatsCards from '@/components/dashboard/stats-cards';
+import LeadsTable from '@/components/crm/leads-table';
+import LeadDetail from '@/components/crm/lead-detail';
+import { mockEmails, mockLeads, Lead } from '@/data/mock-data';
+
+const EmailListView = ({ emails, title }: { emails: typeof mockEmails, title?: string }) => {
+  const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div>
+      <StatsCards />
+      <div className="space-y-4">
+        {emails.map((email) => (
+          <EmailCard 
+            key={email.id} 
+            email={email}
+            isOpen={selectedEmailId === email.id}
+            onOpen={setSelectedEmailId}
+          />
+        ))}
       </div>
     </div>
+  );
+};
+
+const CRMView = () => {
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  
+  if (selectedLead) {
+    return (
+      <LeadDetail 
+        lead={selectedLead} 
+        onBack={() => setSelectedLead(null)} 
+      />
+    );
+  }
+  
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-6">Customer Relationship Management</h2>
+      <LeadsTable 
+        leads={mockLeads} 
+        onSelectLead={setSelectedLead}
+      />
+    </div>
+  );
+};
+
+const Index = () => {
+  const location = useLocation();
+  
+  const getFilteredEmails = () => {
+    const path = location.pathname;
+    
+    switch(true) {
+      case path === '/leads':
+        return mockEmails.filter(e => e.category === 'lead');
+      case path === '/high-priority':
+        return mockEmails.filter(e => e.category === 'high-priority');
+      case path === '/customer-support':
+        return mockEmails.filter(e => e.category === 'customer-support');
+      case path === '/sent':
+        return mockEmails.filter(e => e.direction === 'outbound');
+      default:
+        return mockEmails;
+    }
+  };
+  
+  const renderContent = () => {
+    if (location.pathname === '/crm') {
+      return <CRMView />;
+    }
+    
+    return <EmailListView emails={getFilteredEmails()} />;
+  };
+  
+  return (
+    <ThemeProvider defaultTheme="light">
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header />
+          <main className="flex-1 overflow-auto p-6">
+            {renderContent()}
+          </main>
+        </div>
+      </div>
+    </ThemeProvider>
   );
 };
 
