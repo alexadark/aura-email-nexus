@@ -1,54 +1,36 @@
-
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Inbox, Users, Star, HelpCircle, FolderClosed, SendHorizontal, 
-  Settings, Mail
-} from 'lucide-react';
+import { Inbox, Users, Star, HelpCircle, FolderClosed, SendHorizontal, Settings, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { mockEmails } from '@/data/mock-data';
-
-const NavItem = ({ 
-  icon: Icon, 
-  label, 
-  path, 
-  count, 
-  active 
-}: { 
-  icon: React.ElementType; 
-  label: string; 
-  path: string; 
+const NavItem = ({
+  icon: Icon,
+  label,
+  path,
+  count,
+  active
+}: {
+  icon: React.ElementType;
+  label: string;
+  path: string;
   count?: number;
   active: boolean;
 }) => {
   const navigate = useNavigate();
-  
-  return (
-    <Button
-      variant="ghost"
-      className={cn(
-        "w-full justify-start gap-3 mb-1 pl-4",
-        active ? "bg-sidebar-accent" : "bg-transparent hover:bg-sidebar-accent/50"
-      )}
-      onClick={() => navigate(path)}
-    >
+  return <Button variant="ghost" className={cn("w-full justify-start gap-3 mb-1 pl-4", active ? "bg-sidebar-accent" : "bg-transparent hover:bg-sidebar-accent/50")} onClick={() => navigate(path)}>
       <Icon className="h-5 w-5" />
-      <span className="font-medium">{label}</span>
-      {count !== undefined && (
-        <Badge variant="secondary" className="ml-auto mr-2">
+      <span className="font-medium text-white ">{label}</span>
+      {count !== undefined && <Badge variant="secondary" className="ml-auto mr-2">
           {count}
-        </Badge>
-      )}
-    </Button>
-  );
+        </Badge>}
+    </Button>;
 };
-
 const Sidebar = () => {
   const location = useLocation();
-  
+
   // Count emails by category
   const counts = {
     inbox: mockEmails.filter(e => e.status !== 'archived').length,
@@ -58,11 +40,9 @@ const Sidebar = () => {
     general: mockEmails.filter(e => e.category === 'general').length,
     marketing: mockEmails.filter(e => e.category === 'marketing').length,
     partnership: mockEmails.filter(e => e.subcategory === 'partnership').length,
-    sent: mockEmails.filter(e => e.direction === 'outbound').length,
+    sent: mockEmails.filter(e => e.direction === 'outbound').length
   };
-
-  return (
-    <aside className="w-64 h-screen bg-sidebar flex flex-col border-r shrink-0">
+  return <aside className="w-64 h-screen bg-sidebar flex flex-col border-r shrink-0">
       <div className="p-4 flex items-center gap-2">
         <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
           <Mail className="h-4 w-4 text-sidebar-background" />
@@ -73,47 +53,12 @@ const Sidebar = () => {
       
       <div className="mt-4 flex-1 overflow-y-auto">
         <nav className="px-2 space-y-1">
-          <NavItem 
-            icon={Inbox} 
-            label="Inbox" 
-            path="/"
-            count={counts.inbox}
-            active={location.pathname === '/'}
-          />
-          <NavItem 
-            icon={Users} 
-            label="Leads" 
-            path="/leads"
-            count={counts.leads}
-            active={location.pathname === '/leads'}
-          />
-          <NavItem 
-            icon={Star} 
-            label="High Priority" 
-            path="/high-priority"
-            count={counts.highPriority}
-            active={location.pathname === '/high-priority'}
-          />
-          <NavItem 
-            icon={HelpCircle} 
-            label="Customer Support" 
-            path="/customer-support"
-            count={counts.customerSupport}
-            active={location.pathname === '/customer-support'}
-          />
-          <NavItem 
-            icon={FolderClosed} 
-            label="CRM" 
-            path="/crm"
-            active={location.pathname === '/crm'}
-          />
-          <NavItem 
-            icon={SendHorizontal} 
-            label="Sent Emails" 
-            path="/sent"
-            count={counts.sent}
-            active={location.pathname === '/sent'}
-          />
+          <NavItem icon={Inbox} label="Inbox" path="/" count={counts.inbox} active={location.pathname === '/'} />
+          <NavItem icon={Users} label="Leads" path="/leads" count={counts.leads} active={location.pathname === '/leads'} />
+          <NavItem icon={Star} label="High Priority" path="/high-priority" count={counts.highPriority} active={location.pathname === '/high-priority'} />
+          <NavItem icon={HelpCircle} label="Customer Support" path="/customer-support" count={counts.customerSupport} active={location.pathname === '/customer-support'} />
+          <NavItem icon={FolderClosed} label="CRM" path="/crm" active={location.pathname === '/crm'} />
+          <NavItem icon={SendHorizontal} label="Sent Emails" path="/sent" count={counts.sent} active={location.pathname === '/sent'} />
         </nav>
         
         <Separator className="my-4 bg-sidebar-border/50" />
@@ -162,11 +107,7 @@ const Sidebar = () => {
         </Button>
         <div className="flex items-center mt-4 gap-3">
           <div className="w-8 h-8 rounded-full bg-white flex-shrink-0 overflow-hidden">
-            <img 
-              src="https://ui-avatars.com/api/?name=Alex+Morgan&background=0D8ABC&color=fff" 
-              alt="Alex Morgan" 
-              className="w-full h-full object-cover"
-            />
+            <img src="https://ui-avatars.com/api/?name=Alex+Morgan&background=0D8ABC&color=fff" alt="Alex Morgan" className="w-full h-full object-cover" />
           </div>
           <div className="overflow-hidden">
             <div className="text-sm font-semibold text-sidebar-foreground whitespace-nowrap text-ellipsis overflow-hidden">
@@ -178,8 +119,6 @@ const Sidebar = () => {
           </div>
         </div>
       </div>
-    </aside>
-  );
+    </aside>;
 };
-
 export default Sidebar;
