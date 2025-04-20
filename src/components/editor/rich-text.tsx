@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -11,6 +12,9 @@ import { ListNode, ListItemNode } from "@lexical/list";
 import { CodeNode } from "@lexical/code";
 import { QuoteNode } from "@lexical/rich-text";
 import { TableNode, TableCellNode, TableRowNode } from "@lexical/table";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
+import { $getRoot, $insertNodes } from "lexical";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme/theme-provider";
 
@@ -61,6 +65,31 @@ interface RichTextEditorProps {
 export const RichTextEditor = ({ initialContent, onChange, className }: RichTextEditorProps) => {
   const { theme } = useTheme();
 
+  // Function to handle content changes and pass HTML to parent
+  const handleChange = (editorState: any) => {
+    if (onChange) {
+      editorState.read(() => {
+        const htmlString = $generateHtmlFromNodes(editorState);
+        onChange(htmlString);
+      });
+    }
+  };
+
+  // Function to initialize content from HTML
+  const initialEditorState = (editor: any) => {
+    if (initialContent) {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(initialContent, "text/html");
+      const nodes = $generateNodesFromDOM(editor, dom);
+      
+      editor.update(() => {
+        const root = $getRoot();
+        root.clear();
+        $insertNodes(nodes);
+      });
+    }
+  };
+
   return (
     <LexicalComposer initialConfig={editorConfig}>
       <div className={cn(
@@ -84,7 +113,28 @@ export const RichTextEditor = ({ initialContent, onChange, className }: RichText
         />
         <HistoryPlugin />
         <AutoFocusPlugin />
+        <OnChangePlugin onChange={handleChange} />
+        {initialContent && (
+          <InitialContentPlugin content={initialContent} onInit={initialEditorState} />
+        )}
       </div>
     </LexicalComposer>
   );
+};
+
+// Custom plugin to initialize content
+const InitialContentPlugin = ({ 
+  content, 
+  onInit 
+}: { 
+  content: string; 
+  onInit: (editor: any) => void 
+}) => {
+  useEffect(() => {
+    return {
+      onInit,
+    };
+  }, [content, onInit]);
+
+  return null;
 };
