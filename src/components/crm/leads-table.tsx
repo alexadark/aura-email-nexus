@@ -9,8 +9,22 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Lead } from '@/data/mock-data';
 import { toast } from 'sonner';
+
+// Since we're not using mock-data anymore, define Lead inline
+interface Lead {
+  id: string;
+  name: string | null;
+  email: string | null;
+  industry: string | null;
+  notes: string | null;
+  status: string;
+  type?: string | null;
+  company?: string;
+  assignedTo?: string;
+  lastContact?: string;
+  phone?: string;
+}
 
 interface LeadsTableProps {
   leads: Lead[];

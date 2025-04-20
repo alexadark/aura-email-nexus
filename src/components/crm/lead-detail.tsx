@@ -11,16 +11,16 @@ import { toast } from 'sonner';
 // Define the Lead interface compatible with the app
 interface Lead {
   id: string;
-  name: string;
-  email: string;
+  name: string | null;
+  email: string | null;
   company?: string;
   status: string;
   assignedTo?: string;
   lastContact?: string;
   phone?: string;
-  type?: string;
-  industry: string;
-  notes: string;
+  type?: string | null;
+  industry: string | null;
+  notes: string | null;
 }
 
 interface LeadDetailProps {
@@ -29,7 +29,7 @@ interface LeadDetailProps {
 }
 
 const LeadDetail = ({ lead, onBack }: LeadDetailProps) => {
-  const [notes, setNotes] = useState(lead.notes);
+  const [notes, setNotes] = useState(lead.notes || '');
   
   // Placeholder for lead emails - in real app, would fetch from Supabase
   const leadEmails: Email[] = [];

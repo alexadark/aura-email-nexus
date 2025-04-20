@@ -112,6 +112,11 @@ const CRMView = () => {
     }
   });
   
+  // Function to handle lead selection
+  const handleSelectLead = (lead: Lead) => {
+    setSelectedLead(lead);
+  };
+  
   if (selectedLead) {
     return (
       <LeadDetail 
@@ -150,12 +155,12 @@ const CRMView = () => {
       ) : viewMode === 'table' ? (
         <LeadsTable 
           leads={leads} 
-          onSelectLead={setSelectedLead}
+          onSelectLead={handleSelectLead}
         />
       ) : (
         <KanbanView 
           leads={leads}
-          onSelectLead={setSelectedLead}
+          onSelectLead={handleSelectLead}
         />
       )}
     </div>
