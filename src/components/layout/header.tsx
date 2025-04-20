@@ -1,21 +1,20 @@
-import { Search, Filter, Bell, Plus, Menu } from 'lucide-react';
+import { Search, Filter, Bell, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 interface HeaderProps {
   category?: string;
   onSearch?: (query: string) => void;
-  onMenuClick?: () => void;
 }
 
 const Header = ({
   category,
   onSearch,
-  onMenuClick
 }: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -53,11 +52,7 @@ const Header = ({
     <div className="border-b">
       <div className="flex items-center justify-between p-4 bg-background">
         <div className="flex items-center gap-4">
-          {isMobile && (
-            <Button variant="ghost" size="icon" onClick={onMenuClick}>
-              <Menu className="h-5 w-5" />
-            </Button>
-          )}
+          <SidebarTrigger />
           <h1 className="text-xl md:text-2xl font-bold">{getPageTitle()}</h1>
         </div>
         <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-4">

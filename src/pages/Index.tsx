@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { Outlet, useParams, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { useIsMobile } from '@/hooks/use-mobile';
-import Sidebar from '@/components/layout/sidebar';
+import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/layout/app-sidebar';
 import Header from '@/components/layout/header';
 import EmailCard from '@/components/emails/email-card';
 import StatsCards from '@/components/dashboard/stats-cards';
@@ -83,46 +83,20 @@ const CRMView = () => {
 const Index = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  
-  const getFilteredEmails = () => {
-    const path = location.pathname;
-    
-    switch(true) {
-      case path === '/leads':
-        return mockEmails.filter(e => e.category === 'lead');
-      case path === '/high-priority':
-        return mockEmails.filter(e => e.category === 'high-priority');
-      case path === '/customer-support':
-        return mockEmails.filter(e => e.category === 'customer-support');
-      case path === '/sent':
-        return mockEmails.filter(e => e.direction === 'outbound');
-      default:
-        return mockEmails;
-    }
-  };
-  
-  const renderContent = () => {
-    if (location.pathname === '/crm') {
-      return <CRMView />;
-    }
-    
-    return <EmailListView emails={getFilteredEmails()} />;
-  };
   
   return (
     <ThemeProvider defaultTheme="dark">
-      <div className="flex h-screen overflow-hidden">
-        <div className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 ${isMobile ? 'absolute z-50 h-full' : ''}`}>
-          <Sidebar />
+      <SidebarProvider defaultOpen={!isMobile}>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Header />
+            <main className="flex-1 overflow-auto p-4 md:p-6">
+              {renderContent()}
+            </main>
+          </div>
         </div>
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-          <main className="flex-1 overflow-auto p-4 md:p-6">
-            {renderContent()}
-          </main>
-        </div>
-      </div>
+      </SidebarProvider>
     </ThemeProvider>
   );
 };
