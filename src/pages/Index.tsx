@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { Outlet, useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger } from '@/components/ui/sidebar';
@@ -83,6 +84,30 @@ const CRMView = () => {
 const Index = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
+  
+  // Define the renderContent function here
+  const renderContent = () => {
+    const path = location.pathname;
+    
+    // Filter emails based on the current route
+    if (path === '/crm') {
+      return <CRMView />;
+    } else {
+      let filteredEmails = [...mockEmails];
+      
+      if (path === '/leads') {
+        filteredEmails = mockEmails.filter(email => email.category === 'lead');
+      } else if (path === '/high-priority') {
+        filteredEmails = mockEmails.filter(email => email.category === 'high-priority');
+      } else if (path === '/customer-support') {
+        filteredEmails = mockEmails.filter(email => email.category === 'customer-support');
+      } else if (path === '/sent') {
+        filteredEmails = mockEmails.filter(email => email.direction === 'outbound');
+      }
+      
+      return <EmailListView emails={filteredEmails} />;
+    }
+  };
   
   return (
     <ThemeProvider defaultTheme="dark">
