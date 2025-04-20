@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { Outlet, useParams, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme/theme-provider';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Sidebar from '@/components/layout/sidebar';
 import Header from '@/components/layout/header';
 import EmailCard from '@/components/emails/email-card';
 import StatsCards from '@/components/dashboard/stats-cards';
 import LeadsTable from '@/components/crm/leads-table';
+import KanbanView from '@/components/crm/kanban-view';
 import LeadDetail from '@/components/crm/lead-detail';
 import { mockEmails, mockLeads, Lead } from '@/data/mock-data';
 
@@ -32,6 +34,7 @@ const EmailListView = ({ emails, title }: { emails: typeof mockEmails, title?: s
 
 const CRMView = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   
   if (selectedLead) {
     return (
@@ -44,17 +47,43 @@ const CRMView = () => {
   
   return (
     <div>
-      <h2 className="text-xl font-bold mb-6">Customer Relationship Management</h2>
-      <LeadsTable 
-        leads={mockLeads} 
-        onSelectLead={setSelectedLead}
-      />
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold">Customer Relationship Management</h2>
+        <div className="flex gap-2">
+          <button 
+            className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}
+            onClick={() => setViewMode('table')}
+          >
+            Table
+          </button>
+          <button 
+            className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'kanban' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}
+            onClick={() => setViewMode('kanban')}
+          >
+            Kanban
+          </button>
+        </div>
+      </div>
+      
+      {viewMode === 'table' ? (
+        <LeadsTable 
+          leads={mockLeads} 
+          onSelectLead={setSelectedLead}
+        />
+      ) : (
+        <KanbanView 
+          leads={mockLeads}
+          onSelectLead={setSelectedLead}
+        />
+      )}
     </div>
   );
 };
 
 const Index = () => {
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   
   const getFilteredEmails = () => {
     const path = location.pathname;
@@ -82,12 +111,14 @@ const Index = () => {
   };
   
   return (
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="dark">
       <div className="flex h-screen overflow-hidden">
-        <Sidebar />
+        <div className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 ${isMobile ? 'absolute z-50 h-full' : ''}`}>
+          <Sidebar />
+        </div>
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-auto p-6">
+          <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+          <main className="flex-1 overflow-auto p-4 md:p-6">
             {renderContent()}
           </main>
         </div>
