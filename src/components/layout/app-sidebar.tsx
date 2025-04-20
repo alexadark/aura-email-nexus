@@ -1,8 +1,9 @@
-
+import { useEffect, useState } from 'react';
 import { Mail, Inbox, Users, Star, HelpCircle, FolderClosed, SendHorizontal, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Sidebar, 
   SidebarHeader,
@@ -15,23 +16,85 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { mockEmails } from '@/data/mock-data';
+
+interface Counts {
+  inbox: number;
+  leads: number;
+  highPriority: number;
+  customerSupport: number;
+  marketing: number;
+  partnership: number;
+  general: number;
+  sent: number;
+}
 
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [counts, setCounts] = useState<Counts>({
+    inbox: 0,
+    leads: 0,
+    highPriority: 0,
+    customerSupport: 0,
+    marketing: 0,
+    partnership: 0,
+    general: 0,
+    sent: 0
+  });
 
-  // Count emails by category
-  const counts = {
-    inbox: mockEmails.filter(e => e.status !== 'archived').length,
-    leads: mockEmails.filter(e => e.category === 'lead').length,
-    highPriority: mockEmails.filter(e => e.category === 'high-priority').length,
-    customerSupport: mockEmails.filter(e => e.category === 'customer-support').length,
-    general: mockEmails.filter(e => e.category === 'general').length,
-    marketing: mockEmails.filter(e => e.category === 'marketing').length,
-    partnership: mockEmails.filter(e => e.subcategory === 'partnership').length,
-    sent: mockEmails.filter(e => e.direction === 'outbound').length
-  };
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        // Count emails by category
+        const { data: categoryData, error: categoryError } = await supabase
+          .from('emails')
+          .select('category, subcategory', { count: 'exact' })
+          .not('status', 'eq', 'archived');
+
+        if (categoryError) throw categoryError;
+
+        // Count sent emails
+        const { count: sentCount, error: sentError } = await supabase
+          .from('emails')
+          .select('*', { count: 'exact' })
+          .eq('direction', 'outgoing')
+          .eq('status', 'sent');
+
+        if (sentError) throw sentError;
+
+        const newCounts = {
+          inbox: categoryData?.length || 0,
+          leads: categoryData?.filter(e => e.category?.toLowerCase() === 'lead').length || 0,
+          highPriority: categoryData?.filter(e => e.category?.toLowerCase() === 'high priority').length || 0,
+          customerSupport: categoryData?.filter(e => e.category?.toLowerCase() === 'customer support').length || 0,
+          marketing: categoryData?.filter(e => e.category?.toLowerCase() === 'marketing').length || 0,
+          partnership: categoryData?.filter(e => e.subcategory?.toLowerCase() === 'partnership').length || 0,
+          general: categoryData?.filter(e => e.category?.toLowerCase() === 'general').length || 0,
+          sent: sentCount || 0
+        };
+
+        setCounts(newCounts);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
+    };
+
+    fetchCounts();
+    
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('email-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'emails' },
+        () => fetchCounts()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <Sidebar>

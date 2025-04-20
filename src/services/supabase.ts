@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 
@@ -119,6 +118,30 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
   }
 };
 
+// Function to update a draft reply
+export const updateDraftReply = async (replyId: string, newBody: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('emails')
+      .update({ body: newBody })
+      .eq('id', replyId)
+      .eq('status', 'draft');
+
+    if (error) {
+      console.error('Error updating draft reply:', error);
+      toast.error('Failed to update draft');
+      return false;
+    }
+
+    toast.success('Draft updated successfully');
+    return true;
+  } catch (error) {
+    console.error('Error updating draft:', error);
+    toast.error('Failed to update draft');
+    return false;
+  }
+};
+
 // Function to validate and send a reply
 export const validateAndSendReply = async (replyId: string): Promise<boolean> => {
   try {
@@ -138,7 +161,10 @@ export const validateAndSendReply = async (replyId: string): Promise<boolean> =>
     // Update the reply status in Supabase
     const { error } = await supabase
       .from('emails')
-      .update({ status: 'sent' })
+      .update({ 
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      })
       .eq('id', replyId);
 
     if (error) {
