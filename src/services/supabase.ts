@@ -3,10 +3,40 @@ import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 // Initialize the Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-url.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || 'your-supabase-anon-key';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Check if we're in development environment without proper env variables
+const isDevelopmentWithoutEnv = 
+  import.meta.env.DEV && 
+  (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_KEY);
+
+export const supabase = isDevelopmentWithoutEnv 
+  ? {
+      // Mock Supabase client methods when in development without proper env variables
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            in: () => ({
+              order: () => ({
+                data: [],
+                error: null,
+                count: 0
+              })
+            }),
+            count: () => ({ count: 0, error: null })
+          }),
+          in: () => ({
+            order: () => ({ data: [], error: null })
+          }),
+          count: () => ({ count: 0, error: null })
+        }),
+        update: () => ({
+          eq: () => ({ error: null })
+        })
+      })
+    }
+  : createClient(supabaseUrl, supabaseKey);
 
 export interface Email {
   id: string;
@@ -35,6 +65,15 @@ export interface EmailThread {
 // Function to fetch emails from Supabase
 export const fetchEmails = async (): Promise<EmailThread[]> => {
   try {
+    if (isDevelopmentWithoutEnv) {
+      console.warn('Development environment detected without Supabase credentials. Using mock data.');
+      toast.warning('Using mock data - connect to Supabase for real data', {
+        duration: 5000,
+        id: 'supabase-warning',
+      });
+      return [];
+    }
+
     // Fetch emails with specified categories
     const { data, error } = await supabase
       .from('emails')
@@ -116,6 +155,12 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
 // Function to validate and send a reply
 export const validateAndSendReply = async (replyId: string): Promise<boolean> => {
   try {
+    if (isDevelopmentWithoutEnv) {
+      console.warn('Development environment detected without Supabase credentials. Mocking reply send.');
+      toast.success('Reply sent successfully (mocked)');
+      return true;
+    }
+
     // Send request to N8N webhook
     const response = await fetch('https://cutzai.app.n8n.cloud/webhook/bc8ded86-23ec-467e-8be0-396326476b50', {
       method: 'POST',

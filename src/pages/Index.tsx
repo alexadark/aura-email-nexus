@@ -15,7 +15,7 @@ import { fetchEmails, EmailThread, Email } from '@/services/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Type definition for Lead (to maintain compatibility with existing components)
+// Type definition for Lead, compatible with components from mock-data
 interface Lead {
   id: string;
   name: string;
@@ -26,6 +26,8 @@ interface Lead {
   lastContact?: string;
   phone?: string;
   type?: string;
+  industry: string;
+  notes: string;
 }
 
 const EmailListView = ({ 
@@ -75,8 +77,8 @@ const CRMView = () => {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   
   // In a real implementation, we would fetch leads from Supabase here
-  // For now, we'll use an empty array
-  const leads: Lead[] = [];
+  // For now, we'll use an empty array as placeholder
+  const mockLeads: Lead[] = [];
   
   if (selectedLead) {
     return (
@@ -109,13 +111,13 @@ const CRMView = () => {
       
       {viewMode === 'table' ? (
         <LeadsTable 
-          leads={leads} 
-          onSelectLead={setSelectedLead}
+          leads={mockLeads as any} 
+          onSelectLead={(lead: any) => setSelectedLead(lead)}
         />
       ) : (
         <KanbanView 
-          leads={leads}
-          onSelectLead={setSelectedLead}
+          leads={mockLeads as any}
+          onSelectLead={(lead: any) => setSelectedLead(lead)}
         />
       )}
     </div>

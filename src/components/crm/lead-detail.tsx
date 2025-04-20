@@ -4,9 +4,24 @@ import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Lead, Email, mockEmails } from '@/data/mock-data';
+import { Email } from '@/services/supabase';
 import EmailCard from '@/components/emails/email-card';
 import { toast } from 'sonner';
+
+// Define the Lead interface compatible with the app
+interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  status: string;
+  assignedTo?: string;
+  lastContact?: string;
+  phone?: string;
+  type?: string;
+  industry: string;
+  notes: string;
+}
 
 interface LeadDetailProps {
   lead: Lead;
@@ -16,10 +31,8 @@ interface LeadDetailProps {
 const LeadDetail = ({ lead, onBack }: LeadDetailProps) => {
   const [notes, setNotes] = useState(lead.notes);
   
-  // Find emails related to this lead
-  const leadEmails = mockEmails.filter(
-    email => email.sender_email === lead.email
-  );
+  // Placeholder for lead emails - in real app, would fetch from Supabase
+  const leadEmails: Email[] = [];
   
   const handleSaveNotes = () => {
     // In a real app, this would save to backend
