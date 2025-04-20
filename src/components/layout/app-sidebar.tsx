@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Mail, Inbox, Users, Star, HelpCircle, FolderClosed, SendHorizontal, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -15,6 +16,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
 
 interface Counts {
@@ -23,9 +27,14 @@ interface Counts {
   highPriority: number;
   customerSupport: number;
   marketing: number;
-  partnership: number;
-  general: number;
   sent: number;
+  subcategories: Record<string, number>;
+}
+
+interface Subcategory {
+  name: string;
+  count: number;
+  parent: string;
 }
 
 export function AppSidebar() {
@@ -37,10 +46,10 @@ export function AppSidebar() {
     highPriority: 0,
     customerSupport: 0,
     marketing: 0,
-    partnership: 0,
-    general: 0,
-    sent: 0
+    sent: 0,
+    subcategories: {}
   });
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -62,15 +71,39 @@ export function AppSidebar() {
 
         if (sentError) throw sentError;
 
+        // Process subcategories
+        const subCats: Record<string, Subcategory> = {};
+        categoryData?.forEach(email => {
+          if (email.subcategory && email.category) {
+            const key = `${email.category}:${email.subcategory}`;
+            if (!subCats[key]) {
+              subCats[key] = {
+                name: email.subcategory,
+                count: 1,
+                parent: email.category
+              };
+            } else {
+              subCats[key].count += 1;
+            }
+          }
+        });
+
+        setSubcategories(Object.values(subCats));
+
+        // Group subcategories by category for counting
+        const subcategoryCounts: Record<string, number> = {};
+        Object.values(subCats).forEach(subcat => {
+          subcategoryCounts[subcat.name] = subcat.count;
+        });
+
         const newCounts = {
           inbox: categoryData?.length || 0,
           leads: categoryData?.filter(e => e.category?.toLowerCase() === 'lead').length || 0,
           highPriority: categoryData?.filter(e => e.category?.toLowerCase() === 'high priority').length || 0,
           customerSupport: categoryData?.filter(e => e.category?.toLowerCase() === 'customer support').length || 0,
           marketing: categoryData?.filter(e => e.category?.toLowerCase() === 'marketing').length || 0,
-          partnership: categoryData?.filter(e => e.subcategory?.toLowerCase() === 'partnership').length || 0,
-          general: categoryData?.filter(e => e.category?.toLowerCase() === 'general').length || 0,
-          sent: sentCount || 0
+          sent: sentCount || 0,
+          subcategories: subcategoryCounts
         };
 
         setCounts(newCounts);
@@ -95,6 +128,32 @@ export function AppSidebar() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Group subcategories by their parent category
+  const subcategoriesByCategory = subcategories.reduce<Record<string, Subcategory[]>>((acc, subcat) => {
+    if (!acc[subcat.parent]) {
+      acc[subcat.parent] = [];
+    }
+    acc[subcat.parent].push(subcat);
+    return acc;
+  }, {});
+
+  // Get category color class
+  const getCategoryColorClass = (category: string): string => {
+    const categoryLower = category.toLowerCase();
+    switch (categoryLower) {
+      case 'lead':
+        return 'bg-category-lead';
+      case 'high priority':
+        return 'bg-category-highpriority';
+      case 'customer support':
+        return 'bg-category-support';
+      case 'marketing':
+        return 'bg-category-marketing';
+      default:
+        return 'bg-category-general';
+    }
+  };
 
   return (
     <Sidebar>
@@ -202,28 +261,34 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Categories</SidebarGroupLabel>
           <SidebarGroupContent>
-            <div className="space-y-1 p-2">
-              <div className="flex items-center px-2 py-1.5 text-sm">
-                <span className="h-2 w-2 rounded-full bg-category-lead mr-3"></span>
-                <span className="text-sidebar-foreground">Sales</span>
-                <Badge variant="secondary" className="ml-auto">{counts.leads}</Badge>
-              </div>
-              <div className="flex items-center px-2 py-1.5 text-sm">
-                <span className="h-2 w-2 rounded-full bg-category-marketing mr-3"></span>
-                <span className="text-sidebar-foreground">Marketing</span>
-                <Badge variant="secondary" className="ml-auto">{counts.marketing}</Badge>
-              </div>
-              <div className="flex items-center px-2 py-1.5 text-sm">
-                <span className="h-2 w-2 rounded-full bg-category-partnership mr-3"></span>
-                <span className="text-sidebar-foreground">Partnership</span>
-                <Badge variant="secondary" className="ml-auto">{counts.partnership}</Badge>
-              </div>
-              <div className="flex items-center px-2 py-1.5 text-sm">
-                <span className="h-2 w-2 rounded-full bg-category-general mr-3"></span>
-                <span className="text-sidebar-foreground">General</span>
-                <Badge variant="secondary" className="ml-auto">{counts.general}</Badge>
-              </div>
-            </div>
+            <SidebarMenu>
+              {Object.entries(subcategoriesByCategory).map(([category, subcats]) => (
+                <SidebarMenuItem key={category}>
+                  <SidebarMenuButton>
+                    <span className={`h-2 w-2 rounded-full ${getCategoryColorClass(category)} mr-2`}></span>
+                    <span>{category}</span>
+                    <Badge variant="secondary" className="ml-auto">
+                      {subcats.reduce((sum, subcat) => sum + subcat.count, 0)}
+                    </Badge>
+                  </SidebarMenuButton>
+                  
+                  <SidebarMenuSub>
+                    {subcats.map((subcat) => (
+                      <SidebarMenuSubItem key={`${category}-${subcat.name}`}>
+                        <SidebarMenuSubButton 
+                          onClick={() => navigate(`/category/${category.toLowerCase()}/${subcat.name.toLowerCase()}`)}
+                        >
+                          {subcat.name}
+                          <Badge variant="secondary" className="ml-auto">
+                            {subcat.count}
+                          </Badge>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
