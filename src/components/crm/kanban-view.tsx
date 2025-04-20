@@ -15,7 +15,7 @@ interface KanbanColumnProps {
   onSelectLead: (lead: Lead) => void;
   onDragStart: (lead: Lead, status: string) => void;
   onDrop: (status: string) => void;
-  onDragOver: (e: React.DragOverEvent) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
 const KanbanColumn = ({ 
@@ -109,7 +109,7 @@ const KanbanView = ({
     setSourceStatus('');
   };
   
-  const handleDragOver = (e: React.DragOverEvent) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
