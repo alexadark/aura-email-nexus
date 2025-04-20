@@ -4,17 +4,20 @@ import { toast } from 'sonner';
 
 export interface Email {
   id: string;
-  subject: string;
-  body: string;
-  sender_name: string;
-  sender_email: string;
-  thread_id: string;
-  received_at: string;
-  direction: 'incoming' | 'outgoing';
-  type: 'original' | 'reply';
-  category?: string;
-  subcategory?: string;
-  status?: 'draft' | 'sent';
+  subject: string | null;
+  body: string | null;
+  sender_name: string | null;
+  sender_email: string | null;
+  thread_id: string | null;
+  received_at: string | null;
+  direction: string; // Changed from literal type to string to match Supabase
+  type: string; // Changed from literal type to string to match Supabase
+  category?: string | null;
+  subcategory?: string | null;
+  status?: string | null;
+  sent_at?: string | null;
+  validated_at?: string | null;
+  created_at?: string | null;
 }
 
 export interface EmailThread {
@@ -49,11 +52,13 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
     // Group emails by thread_id
     const threadMap = new Map<string, Email[]>();
     
-    data.forEach((email: Email) => {
-      if (!threadMap.has(email.thread_id)) {
+    data.forEach((email) => {
+      if (email.thread_id && !threadMap.has(email.thread_id)) {
         threadMap.set(email.thread_id, []);
       }
-      threadMap.get(email.thread_id)?.push(email);
+      if (email.thread_id) {
+        threadMap.get(email.thread_id)?.push(email as Email);
+      }
     });
 
     // Create EmailThread objects
@@ -73,9 +78,11 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
         );
         
         // Sort replies by received_at
-        replies.sort((a, b) => 
-          new Date(a.received_at).getTime() - new Date(b.received_at).getTime()
-        );
+        replies.sort((a, b) => {
+          const dateA = a.received_at ? new Date(a.received_at).getTime() : 0;
+          const dateB = b.received_at ? new Date(b.received_at).getTime() : 0;
+          return dateA - dateB;
+        });
         
         // Check if there are any draft replies
         const hasUnreadReplies = replies.some(reply => reply.status === 'draft');
@@ -99,8 +106,9 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
       if (a.category !== 'high priority' && b.category === 'high priority') return 1;
       
       // Then, sort by received_at (most recent first)
-      return new Date(b.originalEmail.received_at).getTime() - 
-             new Date(a.originalEmail.received_at).getTime();
+      const dateA = a.originalEmail.received_at ? new Date(a.originalEmail.received_at).getTime() : 0;
+      const dateB = b.originalEmail.received_at ? new Date(b.originalEmail.received_at).getTime() : 0;
+      return dateB - dateA;
     });
 
     return threads;

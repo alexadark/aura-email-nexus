@@ -16,19 +16,20 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 
-// Type definition for Lead, compatible with components from mock-data
+// Type definition for Lead, compatible with components from Supabase and our UI components
 interface Lead {
   id: string;
-  name: string;
-  email: string;
+  name: string | null;
+  email: string | null;
   company?: string;
-  status: string;
+  status: string;  // Required for the CRM components
   assignedTo?: string;
   lastContact?: string;
   phone?: string;
-  type?: string;
-  industry: string;
-  notes: string;
+  type?: string | null;
+  industry: string | null;
+  notes: string | null;
+  created_at?: string | null;
 }
 
 const EmailListView = ({ 
@@ -91,12 +92,12 @@ const CRMView = () => {
         }
         
         // Map the data to match the Lead interface
-        return data.map((lead: any) => ({
+        return data.map((lead: any): Lead => ({
           id: lead.id || '',
           name: lead.name || '',
           email: lead.email || '',
           company: '',
-          status: lead.type || 'New',
+          status: lead.type || 'New', // Use type as status or default to 'New'
           assignedTo: '',
           lastContact: '',
           phone: '',
@@ -149,12 +150,12 @@ const CRMView = () => {
       ) : viewMode === 'table' ? (
         <LeadsTable 
           leads={leads} 
-          onSelectLead={(lead) => setSelectedLead(lead)}
+          onSelectLead={setSelectedLead}
         />
       ) : (
         <KanbanView 
           leads={leads}
-          onSelectLead={(lead) => setSelectedLead(lead)}
+          onSelectLead={setSelectedLead}
         />
       )}
     </div>
