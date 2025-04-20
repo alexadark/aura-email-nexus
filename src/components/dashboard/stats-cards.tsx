@@ -3,7 +3,7 @@ import { Mail, Users, PercentCircle, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const StatCard = ({ 
@@ -63,51 +63,47 @@ const StatsCards = () => {
     queryFn: async () => {
       try {
         // Query for total emails
-        const totalCountResult = await supabase
+        const { data: totalData, error: totalError } = await supabase
           .from('emails')
           .select('*', { count: 'exact', head: true });
         
-        const totalCount = totalCountResult.count || 0;
-        const totalError = totalCountResult.error;
+        if (totalError) throw totalError;
+        const totalCount = totalData ? (totalData as any).count || 0 : 0;
         
         // Query for lead emails
-        const leadCountResult = await supabase
+        const { data: leadData, error: leadError } = await supabase
           .from('emails')
           .select('*', { count: 'exact', head: true })
           .eq('category', 'lead');
         
-        const leadCount = leadCountResult.count || 0;
-        const leadError = leadCountResult.error;
+        if (leadError) throw leadError;
+        const leadCount = leadData ? (leadData as any).count || 0 : 0;
         
         // Query for AI suggestions (draft replies)
-        const draftCountResult = await supabase
+        const { data: draftData, error: draftError } = await supabase
           .from('emails')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'draft')
           .eq('direction', 'outgoing')
           .eq('type', 'reply');
         
-        const draftCount = draftCountResult.count || 0;
-        const draftError = draftCountResult.error;
+        if (draftError) throw draftError;
+        const draftCount = draftData ? (draftData as any).count || 0 : 0;
         
         // Query for sent replies
-        const sentCountResult = await supabase
+        const { data: sentData, error: sentError } = await supabase
           .from('emails')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'sent')
           .eq('direction', 'outgoing')
           .eq('type', 'reply');
         
-        const sentCount = sentCountResult.count || 0;
-        const sentError = sentCountResult.error;
-        
-        if (totalError || leadError || draftError || sentError) {
-          throw new Error('Failed to fetch email statistics');
-        }
+        if (sentError) throw sentError;
+        const sentCount = sentData ? (sentData as any).count || 0 : 0;
         
         // Calculate response rate
-        const responseRate = (draftCount || sentCount)
-          ? Math.round((sentCount / (draftCount + sentCount)) * 100)
+        const responseRate = sentCount + draftCount > 0
+          ? Math.round((sentCount / (sentCount + draftCount)) * 100)
           : 0;
         
         return {
@@ -127,7 +123,8 @@ const StatsCards = () => {
           responseRate: 0
         };
       }
-    }
+    },
+    refetchInterval: 60000 // Refetch every minute
   });
   
   return (

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -11,9 +11,10 @@ import StatsCards from '@/components/dashboard/stats-cards';
 import LeadsTable from '@/components/crm/leads-table';
 import KanbanView from '@/components/crm/kanban-view';
 import LeadDetail from '@/components/crm/lead-detail';
-import { fetchEmails, EmailThread, Email } from '@/services/supabase';
+import { fetchEmails, EmailThread } from '@/services/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
 
 // Type definition for Lead, compatible with components from mock-data
 interface Lead {
@@ -76,9 +77,39 @@ const CRMView = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   
-  // In a real implementation, we would fetch leads from Supabase here
-  // For now, we'll use an empty array as placeholder
-  const mockLeads: Lead[] = [];
+  // Fetch leads from Supabase
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ['leads'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('crm_leads')
+          .select('*');
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Map the data to match the Lead interface
+        return data.map((lead: any) => ({
+          id: lead.id || '',
+          name: lead.name || '',
+          email: lead.email || '',
+          company: '',
+          status: lead.type || 'New',
+          assignedTo: '',
+          lastContact: '',
+          phone: '',
+          type: lead.type || '',
+          industry: lead.industry || '',
+          notes: lead.notes || ''
+        }));
+      } catch (error) {
+        console.error('Error fetching leads:', error);
+        return [];
+      }
+    }
+  });
   
   if (selectedLead) {
     return (
@@ -109,15 +140,21 @@ const CRMView = () => {
         </div>
       </div>
       
-      {viewMode === 'table' ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          {Array(3).fill(0).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-md" />
+          ))}
+        </div>
+      ) : viewMode === 'table' ? (
         <LeadsTable 
-          leads={mockLeads as any} 
-          onSelectLead={(lead: any) => setSelectedLead(lead)}
+          leads={leads} 
+          onSelectLead={(lead) => setSelectedLead(lead)}
         />
       ) : (
         <KanbanView 
-          leads={mockLeads as any}
-          onSelectLead={(lead: any) => setSelectedLead(lead)}
+          leads={leads}
+          onSelectLead={(lead) => setSelectedLead(lead)}
         />
       )}
     </div>
@@ -150,11 +187,17 @@ const Index = () => {
       let filteredThreads = [...emailThreads];
       
       if (path === '/leads') {
-        filteredThreads = emailThreads.filter(thread => thread.category === 'lead');
+        filteredThreads = emailThreads.filter(thread => 
+          thread.category.toLowerCase() === 'lead'
+        );
       } else if (path === '/high-priority') {
-        filteredThreads = emailThreads.filter(thread => thread.category === 'high-priority');
+        filteredThreads = emailThreads.filter(thread => 
+          thread.category.toLowerCase() === 'high priority'
+        );
       } else if (path === '/customer-support') {
-        filteredThreads = emailThreads.filter(thread => thread.category === 'customer-support');
+        filteredThreads = emailThreads.filter(thread => 
+          thread.category.toLowerCase() === 'customer support'
+        );
       } else if (path === '/sent') {
         // For sent view, we'd need to modify this to show sent emails
         filteredThreads = emailThreads.filter(thread => 

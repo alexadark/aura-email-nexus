@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,82 +6,47 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
-
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
-
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-
-    --primary: 240 10% 20%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 10%;
-
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45%;
-
-    --accent: 0 0% 92%;
-    --accent-foreground: 0 0% 10%;
-
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 240 10% 20%;
-
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 328 85% 61%; /* Sexy magenta pink */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 270 50% 40%; /* Deep purple */
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 89.8%;
-    --sidebar-ring: 240 10% 20%;
   }
 
   .dark {
-    --background: 220 10% 10%;
-    --foreground: 210 40% 98%;
-
-    --card: 220 10% 13%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 220 10% 13%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 220 10% 17%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 220 10% 17%;
-    --muted-foreground: 220 8% 70%;
-
-    --accent: 221 83% 20%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 50.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 220 10% 18%;
-    --input: 220 10% 18%;
-    --ring: 221 83% 53%;
-
-    --sidebar-background: 220 10% 13%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 221 83% 20%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 10% 18%;
-    --sidebar-ring: 221 83% 53%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
   }
 }
 
@@ -88,22 +54,33 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-.email-body {
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  hyphens: auto;
+/* Category Colors */
+.bg-category-lead {
+  background-color: #4f46e5;
 }
 
-.email-card {
-  transition: all 0.2s ease-out;
+.bg-category-high-priority {
+  background-color: #ef4444;
 }
 
-.email-card:hover {
-  transform: translateY(-2px);
+.bg-category-support {
+  background-color: #0ea5e9;
+}
+
+.bg-category-marketing {
+  background-color: #f97316;
+}
+
+.bg-category-partnership {
+  background-color: #10b981;
+}
+
+.bg-category-general {
+  background-color: #6b7280;
 }

@@ -22,8 +22,10 @@ const getCategoryColor = (category: string = '') => {
     case 'lead':
       return 'bg-category-lead';
     case 'high-priority':
+    case 'high priority':
       return 'bg-category-high-priority';
     case 'customer-support':
+    case 'customer support':
       return 'bg-category-support';
     case 'marketing':
       return 'bg-category-marketing';
@@ -39,8 +41,10 @@ const getCategoryLabel = (category: string = '') => {
     case 'lead':
       return 'Lead';
     case 'high-priority':
+    case 'high priority':
       return 'High Priority';
     case 'customer-support':
+    case 'customer support':
       return 'Support';
     case 'marketing':
       return 'Marketing';
