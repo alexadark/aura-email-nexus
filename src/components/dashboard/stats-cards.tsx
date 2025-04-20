@@ -61,49 +61,72 @@ const StatsCards = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['emailStats'],
     queryFn: async () => {
-      // Query for total emails
-      const { count: totalCount, error: totalError } = await supabase
-        .from('emails')
-        .select('*', { count: 'exact', head: true });
-      
-      // Query for lead emails
-      const { count: leadCount, error: leadError } = await supabase
-        .from('emails')
-        .select('*', { count: 'exact', head: true })
-        .eq('category', 'lead');
-      
-      // Query for AI suggestions (draft replies)
-      const { count: draftCount, error: draftError } = await supabase
-        .from('emails')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'draft')
-        .eq('direction', 'outgoing')
-        .eq('type', 'reply');
-      
-      // Query for sent replies
-      const { count: sentCount, error: sentError } = await supabase
-        .from('emails')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'sent')
-        .eq('direction', 'outgoing')
-        .eq('type', 'reply');
-      
-      if (totalError || leadError || draftError || sentError) {
-        throw new Error('Failed to fetch email statistics');
+      try {
+        // Query for total emails
+        const totalCountResult = await supabase
+          .from('emails')
+          .select('*', { count: 'exact', head: true });
+        
+        const totalCount = totalCountResult.count || 0;
+        const totalError = totalCountResult.error;
+        
+        // Query for lead emails
+        const leadCountResult = await supabase
+          .from('emails')
+          .select('*', { count: 'exact', head: true })
+          .eq('category', 'lead');
+        
+        const leadCount = leadCountResult.count || 0;
+        const leadError = leadCountResult.error;
+        
+        // Query for AI suggestions (draft replies)
+        const draftCountResult = await supabase
+          .from('emails')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'draft')
+          .eq('direction', 'outgoing')
+          .eq('type', 'reply');
+        
+        const draftCount = draftCountResult.count || 0;
+        const draftError = draftCountResult.error;
+        
+        // Query for sent replies
+        const sentCountResult = await supabase
+          .from('emails')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'sent')
+          .eq('direction', 'outgoing')
+          .eq('type', 'reply');
+        
+        const sentCount = sentCountResult.count || 0;
+        const sentError = sentCountResult.error;
+        
+        if (totalError || leadError || draftError || sentError) {
+          throw new Error('Failed to fetch email statistics');
+        }
+        
+        // Calculate response rate
+        const responseRate = (draftCount || sentCount)
+          ? Math.round((sentCount / (draftCount + sentCount)) * 100)
+          : 0;
+        
+        return {
+          totalCount,
+          leadCount,
+          draftCount,
+          sentCount,
+          responseRate
+        };
+      } catch (error) {
+        console.error('Error fetching statistics:', error);
+        return {
+          totalCount: 0,
+          leadCount: 0,
+          draftCount: 0,
+          sentCount: 0,
+          responseRate: 0
+        };
       }
-      
-      // Calculate response rate
-      const responseRate = draftCount && sentCount
-        ? Math.round((sentCount / (draftCount + sentCount)) * 100)
-        : 0;
-      
-      return {
-        totalCount: totalCount || 0,
-        leadCount: leadCount || 0,
-        draftCount: draftCount || 0,
-        sentCount: sentCount || 0,
-        responseRate
-      };
     }
   });
   

@@ -1,5 +1,5 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 // Initialize the Supabase client
@@ -11,31 +11,33 @@ const isDevelopmentWithoutEnv =
   import.meta.env.DEV && 
   (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_KEY);
 
-export const supabase = isDevelopmentWithoutEnv 
-  ? {
-      // Mock Supabase client methods when in development without proper env variables
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            in: () => ({
-              order: () => ({
-                data: [],
-                error: null,
-                count: 0
-              })
-            }),
-            count: () => ({ count: 0, error: null })
-          }),
-          in: () => ({
-            order: () => ({ data: [], error: null })
-          }),
-          count: () => ({ count: 0, error: null })
+// Create a mock Supabase client for development without env variables
+const mockSupabaseClient = {
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        in: () => ({
+          order: () => ({
+            data: [],
+            error: null,
+            count: 0
+          })
         }),
-        update: () => ({
-          eq: () => ({ error: null })
-        })
-      })
-    }
+        count: () => ({ count: 0, error: null })
+      }),
+      in: () => ({
+        order: () => ({ data: [], error: null })
+      }),
+      count: () => ({ count: 0, error: null })
+    }),
+    update: () => ({
+      eq: () => ({ error: null })
+    })
+  })
+} as unknown as SupabaseClient;
+
+export const supabase = isDevelopmentWithoutEnv 
+  ? mockSupabaseClient
   : createClient(supabaseUrl, supabaseKey);
 
 export interface Email {
