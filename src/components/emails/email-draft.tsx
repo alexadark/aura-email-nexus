@@ -18,10 +18,13 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isValidated, setIsValidated] = useState(false);
+  const [editorKey, setEditorKey] = useState(0); // Add key to force re-render the editor
 
   useEffect(() => {
     setDraftBody(email.body || '');
     setIsValidated(false);
+    // Increment the key when email changes to force editor re-initialization
+    setEditorKey(prev => prev + 1);
   }, [email.id, email.body]);
 
   const handleEdit = () => {
@@ -98,6 +101,7 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
       {isEditing ? (
         <div className="space-y-4">
           <RichTextEditor
+            key={editorKey} // Use key to force re-render when email changes
             initialContent={draftBody}
             onChange={handleContentChange}
             className="min-h-[300px]"
@@ -111,6 +115,14 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
             >
               <X className="mr-2 h-4 w-4" />
               Cancel
+            </Button>
+            <Button 
+              onClick={handleSave}
+              size="sm"
+              disabled={isSaving}
+              className="mr-2"
+            >
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
             <Button 
               onClick={handleValidate}

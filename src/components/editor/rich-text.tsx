@@ -75,9 +75,10 @@ export const RichTextEditor = ({ initialContent, onChange, className }: RichText
     }
   };
 
-  // Create initial state based on HTML content
-  const initialStateFunction = (editor: any) => {
+  // Create a proper initialization function for the editor
+  const initialEditorState = (editor: any) => {
     if (initialContent) {
+      // Use the editor's update method to properly set the initial content
       editor.update(() => {
         const parser = new DOMParser();
         const dom = parser.parseFromString(initialContent, "text/html");
@@ -94,7 +95,7 @@ export const RichTextEditor = ({ initialContent, onChange, className }: RichText
     <LexicalComposer 
       initialConfig={{
         ...editorConfig,
-        editorState: initialContent ? initialStateFunction : undefined,
+        editorState: initialContent ? initialEditorState : undefined,
       }}
     >
       <div className={cn(
