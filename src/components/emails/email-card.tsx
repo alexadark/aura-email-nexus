@@ -1,13 +1,13 @@
-
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Check, X, Send, CornerDownLeft } from 'lucide-react';
+import { Check, X, Send, CornerDownLeft, Edit } from 'lucide-react';
 import { Email, validateAndSendReply } from '@/services/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { EmailDraft } from '@/components/emails/email-draft';
 
 interface EmailCardProps {
   email: Email;
@@ -65,7 +65,7 @@ const EmailCard = ({
   const [sendingReplyId, setSendingReplyId] = useState<string | null>(null);
   const [isValidated, setIsValidated] = useState<Record<string, boolean>>({});
   
-  const formattedDate = new Date(email.received_at);
+  const formattedDate = new Date(email.received_at || '');
   const isToday = new Date().toDateString() === formattedDate.toDateString();
   const displayDate = isToday 
     ? format(formattedDate, 'h:mm a') 
@@ -120,8 +120,8 @@ const EmailCard = ({
         <div className="flex items-center mb-3">
           <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden mr-3">
             <img 
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(email.sender_name)}&background=random`} 
-              alt={email.sender_name} 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(email.sender_name || '')}&background=random`} 
+              alt={email.sender_name || ''} 
               className="w-full h-full object-cover" 
             />
           </div>
@@ -152,66 +152,13 @@ const EmailCard = ({
             {email.body}
           </p>
           
-          {/* Display draft replies that need validation */}
+          {/* Display draft replies using the EmailDraft component */}
           {isOpen && draftReplies.length > 0 && draftReplies.map(reply => (
-            <div key={reply.id} className="mt-6 p-4 rounded-lg border border-border dark:bg-neutral-800">
-              <div className="flex items-center mb-2">
-                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center mr-2">
-                  <span className="text-xs">AI</span>
-                </div>
-                <h4 className="font-medium">AI Suggested Reply</h4>
-              </div>
-              <p className="whitespace-pre-line text-sm">
-                {reply.body}
-              </p>
-              
-              {!isValidated[reply.id] ? (
-                <div className="flex gap-2 mt-4">
-                  <Button 
-                    size="sm" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleValidate(reply.id);
-                    }} 
-                    className="gap-1 text-slate-50 bg-violet-600 hover:bg-violet-500"
-                  >
-                    <Check className="h-4 w-4" />
-                    Validate
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="gap-1" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleReject(reply.id);
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                    Reject
-                  </Button>
-                </div>
-              ) : (
-                <div className="mt-4">
-                  <Button 
-                    className="gap-1 w-full" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSendReply(reply.id);
-                    }}
-                    disabled={sendingReplyId === reply.id}
-                  >
-                    {sendingReplyId === reply.id ? (
-                      <>Sending...</>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4" />
-                        Validate & Send
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
+            <div key={reply.id} className="mt-6">
+              <EmailDraft 
+                email={reply} 
+                onReplySent={onReplySent}
+              />
             </div>
           ))}
           
@@ -224,7 +171,7 @@ const EmailCard = ({
                 </div>
                 <h4 className="font-medium">Your Reply</h4>
                 <span className="ml-auto text-xs text-muted-foreground">
-                  {format(new Date(reply.received_at), 'h:mm a')}
+                  {reply.received_at ? format(new Date(reply.received_at), 'h:mm a') : ''}
                 </span>
               </div>
               <p className="whitespace-pre-line text-sm">

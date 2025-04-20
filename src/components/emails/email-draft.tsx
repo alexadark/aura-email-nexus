@@ -9,7 +9,7 @@ import { Send, Check, X, Edit } from 'lucide-react';
 
 interface EmailDraftProps {
   email: Email;
-  onReplySent: () => void;
+  onReplySent: (() => void) | undefined;
 }
 
 export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
@@ -70,7 +70,9 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
     
     if (success) {
       toast.success('Email sent successfully');
-      onReplySent();
+      if (onReplySent) {
+        onReplySent();
+      }
       setIsValidated(false);
     } else {
       toast.error('Failed to send email');
@@ -80,10 +82,15 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
   return (
     <div className="border rounded-lg p-4 bg-muted/50 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">AI-Generated Draft Reply</h3>
+        <div className="flex items-center">
+          <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center mr-2">
+            <span className="text-xs">AI</span>
+          </div>
+          <h3 className="text-sm font-medium">AI-Generated Draft Reply</h3>
+        </div>
         {!isEditing && !isValidated && (
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
-            <Edit className="mr-2 h-4 w-4" />
+          <Button variant="ghost" size="sm" onClick={handleEdit} className="gap-1">
+            <Edit className="h-4 w-4" />
             Edit Draft
           </Button>
         )}
@@ -136,6 +143,17 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
             {draftBody}
           </div>
           <div className="flex justify-end gap-2">
+            {!isValidated && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleEdit}
+                className="gap-1"
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
             {isValidated && (
               <Button 
                 onClick={handleSend} 
