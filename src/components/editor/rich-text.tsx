@@ -75,14 +75,14 @@ export const RichTextEditor = ({ initialContent, onChange, className }: RichText
     }
   };
 
-  // Function to initialize content from HTML
-  const initialEditorState = (editor: any) => {
+  // Create initial state based on HTML content
+  const initialStateFunction = (editor: any) => {
     if (initialContent) {
-      const parser = new DOMParser();
-      const dom = parser.parseFromString(initialContent, "text/html");
-      const nodes = $generateNodesFromDOM(editor, dom);
-      
       editor.update(() => {
+        const parser = new DOMParser();
+        const dom = parser.parseFromString(initialContent, "text/html");
+        const nodes = $generateNodesFromDOM(editor, dom);
+        
         const root = $getRoot();
         root.clear();
         $insertNodes(nodes);
@@ -91,7 +91,12 @@ export const RichTextEditor = ({ initialContent, onChange, className }: RichText
   };
 
   return (
-    <LexicalComposer initialConfig={editorConfig}>
+    <LexicalComposer 
+      initialConfig={{
+        ...editorConfig,
+        editorState: initialContent ? initialStateFunction : undefined,
+      }}
+    >
       <div className={cn(
         "relative min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -114,30 +119,7 @@ export const RichTextEditor = ({ initialContent, onChange, className }: RichText
         <HistoryPlugin />
         <AutoFocusPlugin />
         <OnChangePlugin onChange={handleChange} />
-        {initialContent && (
-          <InitialContentPlugin content={initialContent} onInit={initialEditorState} />
-        )}
       </div>
     </LexicalComposer>
   );
-};
-
-// Custom plugin to initialize content
-const InitialContentPlugin = ({ 
-  content, 
-  onInit 
-}: { 
-  content: string; 
-  onInit: (editor: any) => void 
-}) => {
-  useEffect(() => {
-    // Get the editor instance and call onInit with it
-    const editor = document.querySelector("[data-lexical-editor]")?.__lexicalEditor;
-    if (editor) {
-      onInit(editor);
-    }
-    // No return or clean-up needed here
-  }, [content, onInit]);
-
-  return null;
 };
