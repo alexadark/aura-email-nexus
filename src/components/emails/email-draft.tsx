@@ -6,6 +6,7 @@ import { updateDraftReply, validateAndSendReply } from '@/services/supabase';
 import { toast } from 'sonner';
 import type { Email } from '@/services/supabase';
 import { Send, Check, X, Edit } from 'lucide-react';
+import { useTheme } from '@/components/theme/theme-provider';
 
 interface EmailDraftProps {
   email: Email;
@@ -19,6 +20,7 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isValidated, setIsValidated] = useState(false);
   const editorRef = useRef<any>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     setDraftBody(email.body || '');
@@ -89,9 +91,9 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
           <h3 className="text-sm font-medium">AI-Generated Draft Reply</h3>
         </div>
         {!isEditing && !isValidated && (
-          <Button variant="ghost" size="sm" onClick={handleEdit} className="gap-1">
+          <Button onClick={handleEdit} variant="secondary" size="sm" className="gap-1">
             <Edit className="h-4 w-4" />
-            Edit Draft
+            Edit
           </Button>
         )}
       </div>
@@ -99,21 +101,34 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
       {isEditing ? (
         <div className="space-y-4">
           <Editor
+            apiKey="megl6butiqhm3whiwmspl4igyb05ob2u5zke3i53jduwwma6"
             onInit={(evt, editor) => editorRef.current = editor}
             initialValue={draftBody}
             init={{
               height: 300,
               menubar: false,
               plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
                 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                'insertdatetime', 'table', 'help', 'wordcount'
               ],
               toolbar: 'undo redo | blocks | ' +
                 'bold italic | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
                 'removeformat | help',
-              content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+              skin: theme === 'dark' ? 'oxide-dark' : 'oxide',
+              content_css: theme === 'dark' ? 'dark' : 'default',
+              content_style: `
+                body { 
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                  font-size: 14px;
+                  line-height: 1.6;
+                  margin: 1rem;
+                }
+                body.mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before {
+                  color: rgba(255, 255, 255, 0.6);
+                }
+              `
             }}
           />
           <div className="flex justify-end gap-2">
@@ -139,7 +154,7 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="whitespace-pre-wrap text-sm border border-transparent p-2 rounded-md bg-background/50">
+          <div className="whitespace-pre-wrap text-sm rounded-md bg-background/50 p-4 border">
             {draftBody}
           </div>
           <div className="flex justify-end gap-2">
