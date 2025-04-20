@@ -131,9 +131,12 @@ const InitialContentPlugin = ({
   onInit: (editor: any) => void 
 }) => {
   useEffect(() => {
-    return {
-      onInit,
-    };
+    // Get the editor instance and call onInit with it
+    const editor = document.querySelector("[data-lexical-editor]")?.__lexicalEditor;
+    if (editor) {
+      onInit(editor);
+    }
+    // No return or clean-up needed here
   }, [content, onInit]);
 
   return null;
