@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Check, X, Send, CornerDownLeft, Edit } from 'lucide-react';
@@ -174,9 +175,10 @@ const EmailCard = ({
                   {reply.received_at ? format(new Date(reply.received_at), 'h:mm a') : ''}
                 </span>
               </div>
-              <p className="whitespace-pre-line text-sm">
-                {reply.body}
-              </p>
+              <div 
+                className="prose prose-sm dark:prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: reply.body || '' }}
+              />
             </div>
           ))}
         </div>

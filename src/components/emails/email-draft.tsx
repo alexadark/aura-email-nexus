@@ -109,14 +109,13 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
               height: 300,
               menubar: false,
               plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
-                'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'table', 'help', 'wordcount'
+                'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 
+                'image', 'link', 'lists', 'media', 'searchreplace', 
+                'table', 'visualblocks', 'wordcount', 'help'
               ],
-              toolbar: 'undo redo | blocks | ' +
-                'bold italic | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
+              toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | ' +
+                'link image media table | align lineheight | numlist bullist indent outdent | ' +
+                'emoticons charmap | removeformat | help',
               skin: theme === 'dark' ? 'oxide-dark' : 'oxide',
               content_css: theme === 'dark' ? 'dark' : 'default',
               content_style: `
@@ -168,7 +167,7 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
       ) : (
         <div className="space-y-4">
           <div 
-            className="text-sm rounded-md bg-background/50 p-4 border"
+            className="text-sm rounded-md bg-background/50 p-4 border prose prose-sm dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: draftBody }}
           />
           <div className="flex justify-end gap-2">
