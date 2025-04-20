@@ -45,6 +45,7 @@ export type Database = {
           category: string | null
           created_at: string | null
           direction: string | null
+          email_id: string | null
           id: string
           received_at: string | null
           sender_email: string | null
@@ -62,6 +63,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           direction?: string | null
+          email_id?: string | null
           id?: string
           received_at?: string | null
           sender_email?: string | null
@@ -79,6 +81,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           direction?: string | null
+          email_id?: string | null
           id?: string
           received_at?: string | null
           sender_email?: string | null

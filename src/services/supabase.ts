@@ -145,13 +145,43 @@ export const updateDraftReply = async (replyId: string, newBody: string): Promis
 // Function to validate and send a reply
 export const validateAndSendReply = async (replyId: string): Promise<boolean> => {
   try {
-    // Send request to N8N webhook
+    // First, fetch the reply to get its thread_id
+    const { data: replyData, error: replyError } = await supabase
+      .from('emails')
+      .select('thread_id')
+      .eq('id', replyId)
+      .single();
+
+    if (replyError) {
+      throw new Error(`Error fetching reply: ${replyError.message}`);
+    }
+
+    if (!replyData?.thread_id) {
+      throw new Error('Reply has no thread ID');
+    }
+
+    // Then, fetch the original email from the thread
+    const { data: originalEmail, error: originalError } = await supabase
+      .from('emails')
+      .select('id')
+      .eq('thread_id', replyData.thread_id)
+      .eq('type', 'original')
+      .single();
+
+    if (originalError) {
+      throw new Error(`Error fetching original email: ${originalError.message}`);
+    }
+
+    // Send request to N8N webhook with both IDs
     const response = await fetch('https://cutzai.app.n8n.cloud/webhook/bc8ded86-23ec-467e-8be0-396326476b50', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id: replyId }),
+      body: JSON.stringify({ 
+        replyId: replyId,
+        originalEmailId: originalEmail.id 
+      }),
     });
 
     if (!response.ok) {
