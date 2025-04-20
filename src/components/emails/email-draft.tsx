@@ -1,11 +1,11 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Editor } from '@tinymce/tinymce-react';
 import { updateDraftReply, validateAndSendReply } from '@/services/supabase';
 import { toast } from 'sonner';
 import type { Email } from '@/services/supabase';
-import { Send, Check, X } from 'lucide-react';
+import { Send, Check, X, Edit } from 'lucide-react';
 
 interface EmailDraftProps {
   email: Email;
@@ -13,18 +13,21 @@ interface EmailDraftProps {
 }
 
 export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
-  const [isEditing, setIsEditing] = useState(true); // Start in editing mode by default
+  const [isEditing, setIsEditing] = useState(false);
   const [draftBody, setDraftBody] = useState(email.body || '');
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isValidated, setIsValidated] = useState(false);
+  const editorRef = useRef<any>(null);
 
-  // Load the draft content whenever the email changes
   useEffect(() => {
     setDraftBody(email.body || '');
+    setIsValidated(false);
   }, [email.id, email.body]);
 
   const handleEdit = () => {
     setIsEditing(true);
+    setIsValidated(false);
   };
 
   const handleSave = async () => {
@@ -39,30 +42,36 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
     }
   };
 
+  const handleValidate = () => {
+    if (editorRef.current) {
+      const content = editorRef.current.getContent();
+      setDraftBody(content);
+      setIsValidated(true);
+      setIsEditing(false);
+      toast.success('Content validated');
+    }
+  };
+
   const handleCancel = () => {
     setDraftBody(email.body || '');
     setIsEditing(false);
+    setIsValidated(false);
   };
 
   const handleSend = async () => {
-    // First save if in editing mode
-    if (isEditing) {
-      setIsSaving(true);
-      const saveSuccess = await updateDraftReply(email.id, draftBody);
-      setIsSaving(false);
-      
-      if (!saveSuccess) {
-        toast.error('Failed to save draft before sending');
-        return;
-      }
+    if (!isValidated) {
+      toast.error('Please validate the content before sending');
+      return;
     }
     
     setIsSending(true);
     const success = await validateAndSendReply(email.id);
     setIsSending(false);
+    
     if (success) {
       toast.success('Email sent successfully');
       onReplySent();
+      setIsValidated(false);
     } else {
       toast.error('Failed to send email');
     }
@@ -72,57 +81,73 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
     <div className="border rounded-lg p-4 bg-muted/50 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">AI-Generated Draft Reply</h3>
-        {!isEditing && (
+        {!isEditing && !isValidated && (
           <Button variant="ghost" size="sm" onClick={handleEdit}>
+            <Edit className="mr-2 h-4 w-4" />
             Edit Draft
           </Button>
         )}
       </div>
 
       {isEditing ? (
-        <>
-          <Textarea
-            value={draftBody}
-            onChange={(e) => setDraftBody(e.target.value)}
-            className="min-h-[200px]"
-            placeholder="Type your reply here..."
+        <div className="space-y-4">
+          <Editor
+            onInit={(evt, editor) => editorRef.current = editor}
+            initialValue={draftBody}
+            init={{
+              height: 300,
+              menubar: false,
+              plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+              ],
+              toolbar: 'undo redo | blocks | ' +
+                'bold italic | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'removeformat | help',
+              content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+            }}
           />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={handleCancel} disabled={isSaving}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCancel} 
+              disabled={isSaving}
+            >
               <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
             <Button 
-              onClick={handleSave} 
+              onClick={handleValidate}
               size="sm"
               disabled={isSaving}
-              className="mr-2"
+              className="bg-violet-600 hover:bg-violet-500 text-white"
             >
-              {isSaving ? 'Saving...' : 'Save Draft'}
-              {!isSaving && <Check className="ml-2 h-4 w-4" />}
-            </Button>
-            <Button 
-              onClick={handleSend} 
-              disabled={isSending || isSaving}
-            >
-              {isSending ? 'Sending...' : 'Send'}
-              {!isSending && <Send className="ml-2 h-4 w-4" />}
+              <Check className="mr-2 h-4 w-4" />
+              Validate
             </Button>
           </div>
-        </>
+        </div>
       ) : (
-        <>
-          <div className="whitespace-pre-wrap text-sm border border-transparent p-2 rounded-md bg-background/50">{draftBody}</div>
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSend} 
-              disabled={isSending}
-            >
-              {isSending ? 'Sending...' : 'Validate & Send'}
-              {!isSending && <Send className="ml-2 h-4 w-4" />}
-            </Button>
+        <div className="space-y-4">
+          <div className="whitespace-pre-wrap text-sm border border-transparent p-2 rounded-md bg-background/50">
+            {draftBody}
           </div>
-        </>
+          <div className="flex justify-end gap-2">
+            {isValidated && (
+              <Button 
+                onClick={handleSend} 
+                disabled={isSending}
+                className="bg-green-600 hover:bg-green-500 text-white"
+              >
+                {isSending ? 'Sending...' : 'Send'}
+                {!isSending && <Send className="ml-2 h-4 w-4" />}
+              </Button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
