@@ -1,5 +1,5 @@
 
-import { DragHandleDots2Icon } from "@radix-ui/react-icons";
+import { GripVertical } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Lead } from "@/data/mock-data";
 
@@ -26,7 +26,7 @@ const KanbanColumn = ({ title, leads, onSelectLead }: KanbanColumnProps) => (
         >
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DragHandleDots2Icon className="h-5 w-5 text-muted-foreground" />
+              <GripVertical className="h-5 w-5 text-muted-foreground" />
               <div>
                 <h4 className="font-medium">{lead.name}</h4>
                 <p className="text-sm text-muted-foreground">{lead.industry}</p>
