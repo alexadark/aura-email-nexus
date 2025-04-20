@@ -46,6 +46,7 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
 
   const handleValidate = () => {
     if (editorRef.current) {
+      // Get content and preserve formatting
       const content = editorRef.current.getContent();
       setDraftBody(content);
       setIsValidated(true);
@@ -124,6 +125,18 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
                   font-size: 14px;
                   line-height: 1.6;
                   margin: 1rem;
+                  ${theme === 'dark' ? 'color: #fff; background-color: #1A1F2C;' : ''}
+                }
+                p { margin-bottom: 1em; }
+                h1, h2, h3, h4, h5, h6 { margin-bottom: 0.5em; font-weight: bold; }
+                ul, ol { padding-left: 1.5em; margin-bottom: 1em; }
+                li { margin-bottom: 0.5em; }
+                a { color: #9b87f5; text-decoration: underline; }
+                blockquote { 
+                  margin-left: 0;
+                  padding-left: 1em;
+                  border-left: 3px solid #8E9196;
+                  color: ${theme === 'dark' ? '#d4d4d8' : '#6b7280'};
                 }
                 body.mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before {
                   color: rgba(255, 255, 255, 0.6);
@@ -154,9 +167,10 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="whitespace-pre-wrap text-sm rounded-md bg-background/50 p-4 border">
-            {draftBody}
-          </div>
+          <div 
+            className="text-sm rounded-md bg-background/50 p-4 border"
+            dangerouslySetInnerHTML={{ __html: draftBody }}
+          />
           <div className="flex justify-end gap-2">
             {!isValidated && (
               <Button 
