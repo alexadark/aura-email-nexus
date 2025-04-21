@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface Email {
@@ -34,7 +34,7 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
     const { data, error } = await supabase
       .from('emails')
       .select('*')
-      .in('category', ['lead', 'high priority', 'customer support'])
+      .in('category', ['Lead', 'High Priority', 'Customer Support'])
       .order('received_at', { ascending: true });
 
     if (error) {
@@ -50,7 +50,7 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
 
     // Group emails by thread_id
     const threadMap = new Map<string, Email[]>();
-    
+
     data.forEach((email) => {
       if (email.thread_id && !threadMap.has(email.thread_id)) {
         threadMap.set(email.thread_id, []);
@@ -62,36 +62,39 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
 
     // Create EmailThread objects
     const threads: EmailThread[] = [];
-    
+
     threadMap.forEach((emails, threadId) => {
       // Find the original email
       const originalEmail = emails.find(
-        email => email.direction === 'incoming' && email.type === 'original'
+        (email) => email.direction === 'incoming' && email.type === 'original'
       );
-      
+
       if (originalEmail) {
         // Get replies
         const replies = emails.filter(
-          email => (email.direction === 'outgoing' && email.type === 'reply') || 
-                  (email.direction === 'incoming' && email.type !== 'original')
+          (email) =>
+            (email.direction === 'outgoing' && email.type === 'reply') ||
+            (email.direction === 'incoming' && email.type !== 'original')
         );
-        
+
         // Sort replies by received_at
         replies.sort((a, b) => {
           const dateA = a.received_at ? new Date(a.received_at).getTime() : 0;
           const dateB = b.received_at ? new Date(b.received_at).getTime() : 0;
           return dateA - dateB;
         });
-        
+
         // Check if there are any draft replies
-        const hasUnreadReplies = replies.some(reply => reply.status === 'draft');
-        
+        const hasUnreadReplies = replies.some(
+          (reply) => reply.status === 'draft'
+        );
+
         threads.push({
           threadId,
           originalEmail,
           replies,
           category: originalEmail.category || 'other',
-          hasUnreadReplies
+          hasUnreadReplies,
         });
       }
     });
@@ -99,14 +102,20 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
     // Sort threads - leads and high priority first, then by received_at
     threads.sort((a, b) => {
       // First, prioritize threads by category
-      if (a.category === 'lead' && b.category !== 'lead') return -1;
-      if (a.category !== 'lead' && b.category === 'lead') return 1;
-      if (a.category === 'high priority' && b.category !== 'high priority') return -1;
-      if (a.category !== 'high priority' && b.category === 'high priority') return 1;
-      
+      if (a.category === 'Lead' && b.category !== 'Lead') return -1;
+      if (a.category !== 'Lead' && b.category === 'Lead') return 1;
+      if (a.category === 'High Priority' && b.category !== 'High Priority')
+        return -1;
+      if (a.category !== 'High Priority' && b.category === 'High Priority')
+        return 1;
+
       // Then, sort by received_at (most recent first)
-      const dateA = a.originalEmail.received_at ? new Date(a.originalEmail.received_at).getTime() : 0;
-      const dateB = b.originalEmail.received_at ? new Date(b.originalEmail.received_at).getTime() : 0;
+      const dateA = a.originalEmail.received_at
+        ? new Date(a.originalEmail.received_at).getTime()
+        : 0;
+      const dateB = b.originalEmail.received_at
+        ? new Date(b.originalEmail.received_at).getTime()
+        : 0;
       return dateB - dateA;
     });
 
@@ -119,7 +128,10 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
 };
 
 // Function to update a draft reply
-export const updateDraftReply = async (replyId: string, newBody: string): Promise<boolean> => {
+export const updateDraftReply = async (
+  replyId: string,
+  newBody: string
+): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('emails')
@@ -143,7 +155,9 @@ export const updateDraftReply = async (replyId: string, newBody: string): Promis
 };
 
 // Function to validate and send a reply
-export const validateAndSendReply = async (replyId: string): Promise<boolean> => {
+export const validateAndSendReply = async (
+  replyId: string
+): Promise<boolean> => {
   try {
     // First, fetch the reply to get its thread_id
     const { data: replyData, error: replyError } = await supabase
@@ -169,20 +183,25 @@ export const validateAndSendReply = async (replyId: string): Promise<boolean> =>
       .single();
 
     if (originalError) {
-      throw new Error(`Error fetching original email: ${originalError.message}`);
+      throw new Error(
+        `Error fetching original email: ${originalError.message}`
+      );
     }
 
     // Send request to N8N webhook with both IDs
-    const response = await fetch('https://cutzai.app.n8n.cloud/webhook/bc8ded86-23ec-467e-8be0-396326476b50', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        replyId: replyId,
-        originalEmailId: originalEmail.id 
-      }),
-    });
+    const response = await fetch(
+      'https://cutzai.app.n8n.cloud/webhook/bc8ded86-23ec-467e-8be0-396326476b50',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          replyId: replyId,
+          originalEmailId: originalEmail.id,
+        }),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error ${response.status}`);
@@ -191,9 +210,9 @@ export const validateAndSendReply = async (replyId: string): Promise<boolean> =>
     // Update the reply status in Supabase
     const { error } = await supabase
       .from('emails')
-      .update({ 
+      .update({
         status: 'sent',
-        sent_at: new Date().toISOString()
+        sent_at: new Date().toISOString(),
       })
       .eq('id', replyId);
 

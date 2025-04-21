@@ -1,12 +1,20 @@
-
 import { useEffect, useState } from 'react';
-import { Mail, Inbox, Users, Star, HelpCircle, FolderClosed, SendHorizontal, Settings } from 'lucide-react';
+import {
+  Mail,
+  Inbox,
+  Users,
+  Star,
+  HelpCircle,
+  FolderClosed,
+  SendHorizontal,
+  Settings,
+} from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Sidebar, 
+import {
+  Sidebar,
   SidebarHeader,
   SidebarContent,
   SidebarFooter,
@@ -47,7 +55,7 @@ export function AppSidebar() {
     customerSupport: 0,
     marketing: 0,
     sent: 0,
-    subcategories: {}
+    subcategories: {},
   });
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
@@ -73,14 +81,14 @@ export function AppSidebar() {
 
         // Process subcategories
         const subCats: Record<string, Subcategory> = {};
-        categoryData?.forEach(email => {
+        categoryData?.forEach((email) => {
           if (email.subcategory && email.category) {
             const key = `${email.category}:${email.subcategory}`;
             if (!subCats[key]) {
               subCats[key] = {
                 name: email.subcategory,
                 count: 1,
-                parent: email.category
+                parent: email.category,
               };
             } else {
               subCats[key].count += 1;
@@ -92,18 +100,31 @@ export function AppSidebar() {
 
         // Group subcategories by category for counting
         const subcategoryCounts: Record<string, number> = {};
-        Object.values(subCats).forEach(subcat => {
+        Object.values(subCats).forEach((subcat) => {
           subcategoryCounts[subcat.name] = subcat.count;
         });
 
         const newCounts = {
           inbox: categoryData?.length || 0,
-          leads: categoryData?.filter(e => e.category?.toLowerCase() === 'lead').length || 0,
-          highPriority: categoryData?.filter(e => e.category?.toLowerCase() === 'high priority').length || 0,
-          customerSupport: categoryData?.filter(e => e.category?.toLowerCase() === 'customer support').length || 0,
-          marketing: categoryData?.filter(e => e.category?.toLowerCase() === 'marketing').length || 0,
+          leads:
+            categoryData?.filter(
+              (e) => e.category?.toLowerCase() === 'Lead'.toLowerCase()
+            ).length || 0,
+          highPriority:
+            categoryData?.filter(
+              (e) => e.category?.toLowerCase() === 'High Priority'.toLowerCase()
+            ).length || 0,
+          customerSupport:
+            categoryData?.filter(
+              (e) =>
+                e.category?.toLowerCase() === 'Customer Support'.toLowerCase()
+            ).length || 0,
+          marketing:
+            categoryData?.filter(
+              (e) => e.category?.toLowerCase() === 'Marketing'.toLowerCase()
+            ).length || 0,
           sent: sentCount || 0,
-          subcategories: subcategoryCounts
+          subcategories: subcategoryCounts,
         };
 
         setCounts(newCounts);
@@ -113,7 +134,7 @@ export function AppSidebar() {
     };
 
     fetchCounts();
-    
+
     // Set up realtime subscription
     const channel = supabase
       .channel('email-changes')
@@ -130,7 +151,9 @@ export function AppSidebar() {
   }, []);
 
   // Group subcategories by their parent category
-  const subcategoriesByCategory = subcategories.reduce<Record<string, Subcategory[]>>((acc, subcat) => {
+  const subcategoriesByCategory = subcategories.reduce<
+    Record<string, Subcategory[]>
+  >((acc, subcat) => {
     if (!acc[subcat.parent]) {
       acc[subcat.parent] = [];
     }
@@ -162,7 +185,9 @@ export function AppSidebar() {
           <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
             <Mail className="h-4 w-4 text-sidebar-background" />
           </div>
-          <h1 className="text-xl font-bold text-sidebar-foreground">MailAssist AI</h1>
+          <h1 className="text-xl font-bold text-sidebar-foreground">
+            MailAssist AI
+          </h1>
           <ThemeToggle />
         </div>
       </SidebarHeader>
@@ -173,65 +198,73 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={location.pathname === '/'} 
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/'}
                   tooltip="Inbox"
                 >
                   <button onClick={() => navigate('/')}>
                     <Inbox className="h-4 w-4" />
                     <span>Inbox</span>
-                    <Badge variant="secondary" className="ml-auto">{counts.inbox}</Badge>
+                    <Badge variant="secondary" className="ml-auto">
+                      {counts.inbox}
+                    </Badge>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={location.pathname === '/leads'} 
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/leads'}
                   tooltip="Leads"
                 >
                   <button onClick={() => navigate('/leads')}>
                     <Users className="h-4 w-4" />
                     <span>Leads</span>
-                    <Badge variant="secondary" className="ml-auto">{counts.leads}</Badge>
+                    <Badge variant="secondary" className="ml-auto">
+                      {counts.leads}
+                    </Badge>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={location.pathname === '/high-priority'} 
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/high-priority'}
                   tooltip="High Priority"
                 >
                   <button onClick={() => navigate('/high-priority')}>
                     <Star className="h-4 w-4" />
                     <span>High Priority</span>
-                    <Badge variant="secondary" className="ml-auto">{counts.highPriority}</Badge>
+                    <Badge variant="secondary" className="ml-auto">
+                      {counts.highPriority}
+                    </Badge>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={location.pathname === '/customer-support'} 
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/customer-support'}
                   tooltip="Customer Support"
                 >
                   <button onClick={() => navigate('/customer-support')}>
                     <HelpCircle className="h-4 w-4" />
                     <span>Customer Support</span>
-                    <Badge variant="secondary" className="ml-auto">{counts.customerSupport}</Badge>
+                    <Badge variant="secondary" className="ml-auto">
+                      {counts.customerSupport}
+                    </Badge>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={location.pathname === '/crm'} 
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/crm'}
                   tooltip="CRM"
                 >
                   <button onClick={() => navigate('/crm')}>
@@ -242,15 +275,17 @@ export function AppSidebar() {
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={location.pathname === '/sent'} 
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/sent'}
                   tooltip="Sent Emails"
                 >
                   <button onClick={() => navigate('/sent')}>
                     <SendHorizontal className="h-4 w-4" />
                     <span>Sent Emails</span>
-                    <Badge variant="secondary" className="ml-auto">{counts.sent}</Badge>
+                    <Badge variant="secondary" className="ml-auto">
+                      {counts.sent}
+                    </Badge>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -262,39 +297,53 @@ export function AppSidebar() {
           <SidebarGroupLabel>Categories</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {Object.entries(subcategoriesByCategory).map(([category, subcats]) => (
-                <SidebarMenuItem key={category}>
-                  <SidebarMenuButton>
-                    <span className={`h-2 w-2 rounded-full ${getCategoryColorClass(category)} mr-2`}></span>
-                    <span>{category}</span>
-                    <Badge variant="secondary" className="ml-auto">
-                      {subcats.reduce((sum, subcat) => sum + subcat.count, 0)}
-                    </Badge>
-                  </SidebarMenuButton>
-                  
-                  <SidebarMenuSub>
-                    {subcats.map((subcat) => (
-                      <SidebarMenuSubItem key={`${category}-${subcat.name}`}>
-                        <SidebarMenuSubButton 
-                          onClick={() => navigate(`/category/${category.toLowerCase()}/${subcat.name.toLowerCase()}`)}
-                        >
-                          {subcat.name}
-                          <Badge variant="secondary" className="ml-auto">
-                            {subcat.count}
-                          </Badge>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </SidebarMenuItem>
-              ))}
+              {Object.entries(subcategoriesByCategory).map(
+                ([category, subcats]) => (
+                  <SidebarMenuItem key={category}>
+                    <SidebarMenuButton>
+                      <span
+                        className={`h-2 w-2 rounded-full ${getCategoryColorClass(
+                          category
+                        )} mr-2`}
+                      ></span>
+                      <span>{category}</span>
+                      <Badge variant="secondary" className="ml-auto">
+                        {subcats.reduce((sum, subcat) => sum + subcat.count, 0)}
+                      </Badge>
+                    </SidebarMenuButton>
+
+                    <SidebarMenuSub>
+                      {subcats.map((subcat) => (
+                        <SidebarMenuSubItem key={`${category}-${subcat.name}`}>
+                          <SidebarMenuSubButton
+                            onClick={() =>
+                              navigate(
+                                `/category/${category.toLowerCase()}/${subcat.name.toLowerCase()}`
+                              )
+                            }
+                          >
+                            {subcat.name}
+                            <Badge variant="secondary" className="ml-auto">
+                              {subcat.count}
+                            </Badge>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </SidebarMenuItem>
+                )
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <SidebarMenuButton asChild variant="outline" className="w-full justify-start gap-3">
+        <SidebarMenuButton
+          asChild
+          variant="outline"
+          className="w-full justify-start gap-3"
+        >
           <button>
             <Settings className="h-4 w-4" />
             <span>Settings</span>
@@ -302,10 +351,10 @@ export function AppSidebar() {
         </SidebarMenuButton>
         <div className="flex items-center mt-4 gap-3">
           <div className="w-8 h-8 rounded-full bg-white flex-shrink-0 overflow-hidden">
-            <img 
-              src="https://ui-avatars.com/api/?name=Alex+Morgan&background=0D8ABC&color=fff" 
-              alt="Alex Morgan" 
-              className="w-full h-full object-cover" 
+            <img
+              src="https://ui-avatars.com/api/?name=Alex+Morgan&background=0D8ABC&color=fff"
+              alt="Alex Morgan"
+              className="w-full h-full object-cover"
             />
           </div>
           <div className="overflow-hidden">
