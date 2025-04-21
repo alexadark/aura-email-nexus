@@ -22,7 +22,7 @@ export interface Email {
 export interface EmailThread {
   threadId: string;
   originalEmail: Email;
-  replies: Email[];
+replies: Email[];
   category: string;
   hasUnreadReplies: boolean;
 }
@@ -49,55 +49,33 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
     }
 
     // Group emails by thread_id
-    const threadMap = new Map<string, Email[]>();
-
+    const threadsMap: Record<string, Email[]> = {};
     data.forEach((email) => {
-      if (email.thread_id && !threadMap.has(email.thread_id)) {
-        threadMap.set(email.thread_id, []);
+      if (!threadsMap[email.thread_id]) {
+        threadsMap[email.thread_id] = [];
       }
-      if (email.thread_id) {
-        threadMap.get(email.thread_id)?.push(email as Email);
-      }
+      threadsMap[email.thread_id].push(email as Email);
     });
 
-    // Create EmailThread objects
-    const threads: EmailThread[] = [];
-
-    threadMap.forEach((emails, threadId) => {
-      // Find the original email
-      const originalEmail = emails.find(
-        (email) => email.direction === 'incoming' && email.type === 'original'
-      );
-
-      if (originalEmail) {
-        // Get replies
-        const replies = emails.filter(
-          (email) =>
-            (email.direction === 'outgoing' && email.type === 'reply') ||
-            (email.direction === 'incoming' && email.type !== 'original')
+    // Build threads with originalEmail and replies
+    const threads: EmailThread[] = Object.entries(threadsMap).map(
+      ([threadId, emails]) => {
+        const sorted = emails.sort((a, b) =>
+          (a.received_at || a.created_at || '') > (b.received_at || b.created_at || '')
+            ? 1
+            : -1
         );
-
-        // Sort replies by received_at
-        replies.sort((a, b) => {
-          const dateA = a.received_at ? new Date(a.received_at).getTime() : 0;
-          const dateB = b.received_at ? new Date(b.received_at).getTime() : 0;
-          return dateA - dateB;
-        });
-
-        // Check if there are any draft replies
-        const hasUnreadReplies = replies.some(
-          (reply) => reply.status === 'draft'
-        );
-
-        threads.push({
+        const originalEmail = sorted[0];
+        const replies = sorted.slice(1);
+        return {
           threadId,
           originalEmail,
           replies,
-          category: originalEmail.category || 'other',
-          hasUnreadReplies,
-        });
+          category: originalEmail?.category || '',
+          hasUnreadReplies: sorted.some((e) => e.status === 'draft'),
+        };
       }
-    });
+    );
 
     // Sort threads - leads and high priority first, then by received_at
     threads.sort((a, b) => {
@@ -175,18 +153,22 @@ export const validateAndSendReply = async (
     }
 
     // Then, fetch the original email from the thread
-    const { data: originalEmail, error: originalError } = await supabase
+    const { data: originalEmails, error: originalError } = await supabase
       .from('emails')
       .select('id')
       .eq('thread_id', replyData.thread_id)
       .eq('type', 'original')
-      .single();
+      .limit(1);
 
     if (originalError) {
       throw new Error(
         `Error fetching original email: ${originalError.message}`
       );
     }
+    if (!originalEmails || originalEmails.length === 0) {
+      throw new Error('No original email found for this thread');
+    }
+    const originalEmail = originalEmails[0];
 
     // Send request to N8N webhook with both IDs
     const response = await fetch(

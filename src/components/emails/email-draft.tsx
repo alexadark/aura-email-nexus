@@ -58,6 +58,7 @@ export const EmailDraft = ({ email, onReplySent }: EmailDraftProps) => {
 
   const handleSend = async () => {
     setIsSending(true);
+    console.log('Sending reply', email);
     const success = await validateAndSendReply(email.id);
     setIsSending(false);
     

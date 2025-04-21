@@ -1,10 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Email } from '@/services/supabase';
+import { Email, EmailThread, fetchEmails } from '@/services/supabase';
 import EmailCard from '@/components/emails/email-card';
 import { toast } from 'sonner';
 
@@ -31,8 +31,36 @@ interface LeadDetailProps {
 const LeadDetail = ({ lead, onBack }: LeadDetailProps) => {
   const [notes, setNotes] = useState(lead.notes || '');
   
-  // Placeholder for lead emails - in real app, would fetch from Supabase
-  const leadEmails: Email[] = [];
+  // State for emails and loading
+  const [leadEmails, setLeadEmails] = useState<EmailThread[]>([]);
+  const [loadingEmails, setLoadingEmails] = useState(false);
+
+  // Fetch emails for this lead
+  const fetchLeadEmails = async () => {
+    setLoadingEmails(true);
+    try {
+      const threads = await fetchEmails(); // returns EmailThread[]
+      // Filter threads for this lead (by lead.email if available)
+      const filtered = threads.filter(thread => {
+        // If you have a better way to match (e.g., thread.leadId), use it
+        return thread.originalEmail.sender_email === lead.email;
+      });
+      setLeadEmails(filtered);
+    } catch (e) {
+      setLeadEmails([]);
+    }
+    setLoadingEmails(false);
+  };
+
+  useEffect(() => {
+    fetchLeadEmails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead.id, lead.email]);
+
+  // Called after a reply is sent
+  const handleReplySent = () => {
+    fetchLeadEmails();
+  };
   
   const handleSaveNotes = () => {
     // In a real app, this would save to backend
@@ -95,11 +123,13 @@ const LeadDetail = ({ lead, onBack }: LeadDetailProps) => {
           <h3 className="text-lg font-bold mb-4">Communication History</h3>
           {leadEmails.length > 0 ? (
             <div className="space-y-4">
-              {leadEmails.map(email => (
-                <EmailCard 
-                  key={email.id}
-                  email={email}
+              {leadEmails.map(thread => (
+                <EmailCard
+                  key={thread.originalEmail.id}
+                  email={thread.originalEmail}
+                  replies={thread.replies}
                   isOpen={true}
+                  onReplySent={handleReplySent}
                 />
               ))}
             </div>

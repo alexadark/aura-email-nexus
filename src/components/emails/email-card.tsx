@@ -11,7 +11,7 @@ import { EmailDraft } from '@/components/emails/email-draft';
 
 interface EmailCardProps {
   email: Email;
-  replies?: Email[];
+  replies: Email[];
   isOpen?: boolean;
   onOpen?: (emailId: string) => void;
   onReplySent?: () => void;
@@ -51,24 +51,21 @@ const getCategoryLabel = (category: string = '') => {
   }
 };
 
-const EmailCard = ({
+function formatBody(body: string) {
+  if (/<[a-z][\s\S]*>/i.test(body)) return body;
+  return body.replace(/\n/g, '<br />');
+}
+
+export default function EmailCard({
   email,
-  replies = [],
+  replies,
   isOpen,
   onOpen,
   onReplySent,
-}: EmailCardProps) => {
+}: EmailCardProps) {
+  console.log('EmailCard', { email, replies });
   const [sendingReplyId, setSendingReplyId] = useState<string | null>(null);
   const [isValidated, setIsValidated] = useState<Record<string, boolean>>({});
-
-  const formattedDate = new Date(email.received_at || '');
-  const isToday = new Date().toDateString() === formattedDate.toDateString();
-  const displayDate = isToday
-    ? format(formattedDate, 'h:mm a')
-    : formattedDate.toDateString() ===
-      new Date(Date.now() - 86400000).toDateString()
-    ? 'Yesterday'
-    : format(formattedDate, 'MMM d');
 
   const handleValidate = (replyId: string) => {
     setIsValidated((prev) => ({ ...prev, [replyId]: true }));
@@ -91,21 +88,8 @@ const EmailCard = ({
     setSendingReplyId(null);
   };
 
-  // Filter for draft replies that need validation
-  const draftReplies = replies.filter(
-    (reply) =>
-      reply.direction === 'outgoing' &&
-      reply.type === 'reply' &&
-      reply.status === 'draft'
-  );
+  // Sort all messages (original + replies) by received_at
 
-  // Filter for sent replies to display
-  const sentReplies = replies.filter(
-    (reply) =>
-      reply.direction === 'outgoing' &&
-      reply.type === 'reply' &&
-      reply.status === 'sent'
-  );
 
   return (
     <Card
@@ -116,90 +100,44 @@ const EmailCard = ({
       onClick={() => onOpen && onOpen(email.id)}
     >
       <CardContent className="p-4">
-        <div className="flex items-center mb-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden mr-3">
-            <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                email.sender_name || ''
-              )}&background=random`}
-              alt={email.sender_name || ''}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-foreground truncate">
-              {email.sender_name}
-            </h3>
-            <p className="text-sm text-muted-foreground truncate">
-              {email.sender_email}
-            </p>
-          </div>
-          <div className="flex-shrink-0 flex items-center gap-2">
-            {email.category && (
-              <Badge
-                className={cn('text-white', getCategoryColor(email.category))}
-              >
-                {getCategoryLabel(email.category)}
-              </Badge>
-            )}
-            <span className="text-sm text-muted-foreground">{displayDate}</span>
-          </div>
-        </div>
-
-        <h2 className="text-lg font-semibold mb-2">{email.subject}</h2>
-
-        <div
-          className={cn(
-            'email-body transition-all overflow-hidden',
-            isOpen ? 'max-h-full' : 'max-h-16'
-          )}
-        >
-          <p
-            className={cn(
-              'text-muted-foreground whitespace-pre-line',
-              !isOpen && 'line-clamp-2'
-            )}
-          >
-            {email.body}
-          </p>
-
-          {/* Display draft replies using the EmailDraft component */}
-          {isOpen &&
-            draftReplies.length > 0 &&
-            draftReplies.map((reply) => (
-              <div key={reply.id} className="mt-6">
-                <EmailDraft email={reply} onReplySent={onReplySent} />
-              </div>
-            ))}
-
-          {/* Display sent replies */}
-          {isOpen &&
-            sentReplies.map((reply) => (
+        <div className="flex flex-col gap-6">
+          {[email, ...replies].map((msg) =>
+            msg.status === 'draft' && msg.direction === 'outgoing' && msg.type === 'reply' ? (
+              <EmailDraft key={msg.id} email={msg} onReplySent={onReplySent} />
+            ) : (
               <div
-                key={reply.id}
-                className="mt-6 p-4 rounded-lg border border-border bg-background"
+                key={msg.id}
+                className={cn(
+                  'p-4 rounded-lg border border-border bg-background',
+                  '' // remove isOriginal logic, as all messages are in order
+                )}
               >
                 <div className="flex items-center mb-2">
-                  <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center mr-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2">
                     <CornerDownLeft className="h-3 w-3" />
                   </div>
-                  <h4 className="font-medium">Your Reply</h4>
+                  <h4 className="font-medium">
+                    {msg.sender_name || 'Unknown'}
+                  </h4>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {reply.received_at
-                      ? format(new Date(reply.received_at), 'h:mm a')
-                      : ''}
+                    {msg.received_at
+                      ? format(new Date(msg.received_at), 'h:mm a')
+                      : msg.created_at
+                        ? format(new Date(msg.created_at), 'h:mm a')
+                        : ''}
                   </span>
                 </div>
                 <div
                   className="prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: reply.body || '' }}
+                  dangerouslySetInnerHTML={{ __html: formatBody(msg.body || '') }}
                 />
               </div>
-            ))}
+            )
+          )}
         </div>
       </CardContent>
     </Card>
   );
 };
 
-export default EmailCard;
+

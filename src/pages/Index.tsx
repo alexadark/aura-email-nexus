@@ -61,7 +61,7 @@ const EmailListView = ({
           emailThreads.map((thread) => (
             <EmailCard 
               key={thread.threadId} 
-              email={thread.originalEmail}
+              email={thread.originalEmail} 
               replies={thread.replies}
               isOpen={selectedEmailId === thread.originalEmail.id}
               onOpen={setSelectedEmailId}
