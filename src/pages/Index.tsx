@@ -186,39 +186,58 @@ const Index = () => {
   const renderContent = () => {
     const path = location.pathname;
     
-    // Filter emails based on the current route
+    // Handle CRM view
     if (path === '/crm') {
       return <CRMView />;
-    } else {
-      let filteredThreads = [...emailThreads];
-      
-      if (path === '/leads') {
-        filteredThreads = emailThreads.filter(thread => 
-          thread.category.toLowerCase() === 'lead'
-        );
-      } else if (path === '/high-priority') {
-        filteredThreads = emailThreads.filter(thread => 
-          thread.category.toLowerCase() === 'high priority'
-        );
-      } else if (path === '/customer-support') {
-        filteredThreads = emailThreads.filter(thread => 
-          thread.category.toLowerCase() === 'customer support'
-        );
-      } else if (path === '/sent') {
-        // For sent view, we'd need to modify this to show sent emails
-        filteredThreads = emailThreads.filter(thread => 
-          thread.replies.some(reply => reply.direction === 'outgoing' && reply.status === 'sent')
-        );
-      }
-      
-      return (
-        <EmailListView 
-          emailThreads={filteredThreads} 
-          isLoading={isLoading}
-          refetch={refetch}
-        />
+    } 
+    
+    // Handle all email-related views
+    let filteredThreads = [...emailThreads];
+    let categoryTitle = "All Emails";
+    
+    if (path === '/leads') {
+      filteredThreads = emailThreads.filter(thread => 
+        thread.category.toLowerCase() === 'lead'
       );
+      categoryTitle = "Leads";
+    } else if (path === '/high-priority') {
+      filteredThreads = emailThreads.filter(thread => 
+        thread.category.toLowerCase() === 'high priority'
+      );
+      categoryTitle = "High Priority";
+    } else if (path === '/customer-support') {
+      filteredThreads = emailThreads.filter(thread => 
+        thread.category.toLowerCase() === 'customer support'
+      );
+      categoryTitle = "Customer Support";
+    } else if (path === '/sent') {
+      filteredThreads = emailThreads.filter(thread => 
+        thread.replies.some(reply => reply.direction === 'outgoing' && reply.status === 'sent')
+      );
+      categoryTitle = "Sent Emails";
+    } else if (path.startsWith('/category/')) {
+      // Handle category/subcategory routes
+      const pathParts = path.split('/').filter(part => part);
+      if (pathParts.length >= 3) {
+        const category = decodeURIComponent(pathParts[1]);
+        const subcategory = decodeURIComponent(pathParts[2]);
+        
+        filteredThreads = emailThreads.filter(thread => 
+          thread.category.toLowerCase() === category.toLowerCase() && 
+          thread.originalEmail.subcategory?.toLowerCase() === subcategory.toLowerCase()
+        );
+        categoryTitle = `${category} - ${subcategory}`;
+      }
     }
+    
+    return (
+      <EmailListView 
+        emailThreads={filteredThreads} 
+        title={categoryTitle}
+        isLoading={isLoading}
+        refetch={refetch}
+      />
+    );
   };
   
   return (

@@ -22,6 +22,8 @@ const App = () => (
           <Route path="/customer-support" element={<Index />} />
           <Route path="/crm" element={<Index />} />
           <Route path="/sent" element={<Index />} />
+          {/* Add route for category and subcategory */}
+          <Route path="/category/:category/:subcategory" element={<Index />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
