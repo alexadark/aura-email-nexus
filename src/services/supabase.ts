@@ -60,11 +60,11 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
     // Build threads with originalEmail and replies
     const threads: EmailThread[] = Object.entries(threadsMap).map(
       ([threadId, emails]) => {
-        const sorted = emails.sort((a, b) =>
-          (a.received_at || a.created_at || '') > (b.received_at || b.created_at || '')
-            ? 1
-            : -1
-        );
+        const sorted = emails.slice().sort((a, b) => {
+          const dateA = a.received_at ? new Date(a.received_at).getTime() : a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.received_at ? new Date(b.received_at).getTime() : b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateA - dateB;
+        });
         const originalEmail = sorted[0];
         const replies = sorted.slice(1);
         return {

@@ -52,7 +52,6 @@ const getCategoryLabel = (category: string = '') => {
 };
 
 function formatBody(body: string) {
-  if (/<[a-z][\s\S]*>/i.test(body)) return body;
   return body.replace(/\n/g, '<br />');
 }
 
@@ -101,7 +100,13 @@ export default function EmailCard({
     >
       <CardContent className="p-4">
         <div className="flex flex-col gap-6">
-          {[email, ...replies].map((msg) =>
+          {(() => {
+  const allMsgs = [email, ...replies];
+  allMsgs.forEach((msg, idx) => {
+    console.log(`EmailCard message #${idx} (id: ${msg.id}):`, msg.body);
+  });
+  return allMsgs;
+})().map((msg) =>
             msg.status === 'draft' && msg.direction === 'outgoing' && msg.type === 'reply' ? (
               <EmailDraft key={msg.id} email={msg} onReplySent={onReplySent} />
             ) : (
@@ -129,7 +134,12 @@ export default function EmailCard({
                 </div>
                 <div
                   className="prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: formatBody(msg.body || '') }}
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      msg.direction === 'incoming'
+                        ? formatBody(msg.body || '')
+                        : msg.body || ''
+                  }}
                 />
               </div>
             )
