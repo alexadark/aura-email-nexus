@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Check, X, Send, CornerDownLeft, Edit } from 'lucide-react';
+import { Check, X, Send, CornerDownLeft, Edit, ChevronDown, ChevronRight } from 'lucide-react';
 import { Email, validateAndSendReply } from '@/services/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { EmailDraft } from '@/components/emails/email-draft';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface EmailCardProps {
   email: Email;
@@ -58,96 +60,97 @@ function formatBody(body: string) {
 export default function EmailCard({
   email,
   replies,
-  isOpen,
+  isOpen: propIsOpen,
   onOpen,
   onReplySent,
 }: EmailCardProps) {
-  console.log('EmailCard', { email, replies });
+  const [isOpen, setIsOpen] = useState(false);
   const [sendingReplyId, setSendingReplyId] = useState<string | null>(null);
   const [isValidated, setIsValidated] = useState<Record<string, boolean>>({});
 
-  const handleValidate = (replyId: string) => {
-    setIsValidated((prev) => ({ ...prev, [replyId]: true }));
-    toast.success('Reply validated');
-  };
-
-  const handleReject = (replyId: string) => {
-    setIsValidated((prev) => ({ ...prev, [replyId]: false }));
-    toast.error('Reply rejected');
-  };
-
-  const handleSendReply = async (replyId: string) => {
-    setSendingReplyId(replyId);
-    const success = await validateAndSendReply(replyId);
-
-    if (success && onReplySent) {
-      onReplySent();
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+    if (onOpen && !isOpen) {
+      onOpen(email.id);
     }
-
-    setSendingReplyId(null);
   };
 
-  // Sort all messages (original + replies) by received_at
-
+  const formattedDate = email.received_at 
+    ? format(new Date(email.received_at), 'MMM d, yyyy h:mm a')
+    : email.created_at
+      ? format(new Date(email.created_at), 'MMM d, yyyy h:mm a')
+      : '';
 
   return (
-    <Card
-      className={cn(
-        'mb-4 email-card border-l-4 transition-all overflow-hidden',
-        isOpen ? 'border-l-primary' : 'border-l-transparent'
-      )}
-      onClick={() => onOpen && onOpen(email.id)}
-    >
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-6">
-          {(() => {
-  const allMsgs = [email, ...replies];
-  allMsgs.forEach((msg, idx) => {
-    console.log(`EmailCard message #${idx} (id: ${msg.id}):`, msg.body);
-  });
-  return allMsgs;
-})().map((msg) =>
-            msg.status === 'draft' && msg.direction === 'outgoing' && msg.type === 'reply' ? (
-              <EmailDraft key={msg.id} email={msg} onReplySent={onReplySent} />
-            ) : (
-              <div
-                key={msg.id}
-                className={cn(
-                  'p-4 rounded-lg border border-border bg-background',
-                  '' // remove isOriginal logic, as all messages are in order
-                )}
-              >
-                <div className="flex items-center mb-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2">
-                    <CornerDownLeft className="h-3 w-3" />
-                  </div>
-                  <h4 className="font-medium">
-                    {msg.sender_name || 'Unknown'}
-                  </h4>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {msg.received_at
-                      ? format(new Date(msg.received_at), 'h:mm a')
-                      : msg.created_at
-                        ? format(new Date(msg.created_at), 'h:mm a')
-                        : ''}
-                  </span>
-                </div>
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      msg.direction === 'incoming'
-                        ? formatBody(msg.body || '')
-                        : msg.body || ''
-                  }}
-                />
+    <Card className={cn(
+      'mb-4 email-card border-l-4 transition-all',
+      isOpen ? 'border-l-primary' : 'border-l-transparent'
+    )}>
+      <CollapsibleTrigger
+        asChild
+        onClick={handleToggle}
+      >
+        <div className="p-4 cursor-pointer hover:bg-accent/50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <div>
+              <div className="font-medium">{email.sender_name || 'Unknown'}</div>
+              <div className="text-sm text-muted-foreground truncate max-w-[600px]">
+                {email.subject || 'No subject'}
               </div>
-            )
-          )}
+            </div>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {formattedDate}
+          </div>
         </div>
-      </CardContent>
+      </CollapsibleTrigger>
+
+      <Collapsible open={isOpen}>
+        <CollapsibleContent>
+          <CardContent className="p-4 pt-0">
+            <div className="flex flex-col gap-6">
+              {[email, ...replies].map((msg) =>
+                msg.status === 'draft' && msg.direction === 'outgoing' && msg.type === 'reply' ? (
+                  <EmailDraft key={msg.id} email={msg} onReplySent={onReplySent} />
+                ) : (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      'p-4 rounded-lg border border-border bg-background'
+                    )}
+                  >
+                    <div className="flex items-center mb-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2">
+                        <CornerDownLeft className="h-3 w-3" />
+                      </div>
+                      <h4 className="font-medium">
+                        {msg.sender_name || 'Unknown'}
+                      </h4>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {msg.received_at
+                          ? format(new Date(msg.received_at), 'h:mm a')
+                          : msg.created_at
+                            ? format(new Date(msg.created_at), 'h:mm a')
+                            : ''}
+                      </span>
+                    </div>
+                    <div
+                      className="prose prose-sm dark:prose-invert max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          msg.direction === 'incoming'
+                            ? formatBody(msg.body || '')
+                            : msg.body || ''
+                      }}
+                    />
+                  </div>
+                )
+              )}
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
-};
-
-
+}

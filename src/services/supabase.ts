@@ -22,7 +22,7 @@ export interface Email {
 export interface EmailThread {
   threadId: string;
   originalEmail: Email;
-replies: Email[];
+  replies: Email[];
   category: string;
   hasUnreadReplies: boolean;
 }
@@ -35,7 +35,7 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
       .from('emails')
       .select('*')
       .in('category', ['Lead', 'High Priority', 'Customer Support'])
-      .order('received_at', { ascending: true });
+      .order('created_at', { ascending: false });  // Order by created_at in descending order
 
     if (error) {
       console.error('Error fetching emails:', error);
@@ -87,11 +87,15 @@ export const fetchEmails = async (): Promise<EmailThread[]> => {
       if (a.category !== 'High Priority' && b.category === 'High Priority')
         return 1;
 
-      // Then, sort by received_at (most recent first)
-      const dateA = a.originalEmail.received_at
+      // Then, sort by created_at (most recent first)
+      const dateA = a.originalEmail.created_at
+        ? new Date(a.originalEmail.created_at).getTime()
+        : a.originalEmail.received_at
         ? new Date(a.originalEmail.received_at).getTime()
         : 0;
-      const dateB = b.originalEmail.received_at
+      const dateB = b.originalEmail.created_at
+        ? new Date(b.originalEmail.created_at).getTime()
+        : b.originalEmail.received_at
         ? new Date(b.originalEmail.received_at).getTime()
         : 0;
       return dateB - dateA;
