@@ -64,13 +64,13 @@ export default function EmailCard({
   onOpen,
   onReplySent,
 }: EmailCardProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  // Use the controlled isOpen prop from parent instead of local state
   const [sendingReplyId, setSendingReplyId] = useState<string | null>(null);
   const [isValidated, setIsValidated] = useState<Record<string, boolean>>({});
 
   const handleToggle = () => {
-    setIsOpen(!isOpen);
-    if (onOpen && !isOpen) {
+    // Always call onOpen with the email ID to let parent handle open/close logic
+    if (onOpen) {
       onOpen(email.id);
     }
   };
@@ -107,14 +107,14 @@ export default function EmailCard({
   return (
     <Card className={cn(
       'mb-4 email-card border-l-4 transition-all',
-      isOpen ? 'border-l-primary' : 'border-l-transparent'
+      propIsOpen ? 'border-l-primary' : 'border-l-transparent'
     )}>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={propIsOpen}>
         <div className="p-4 cursor-pointer hover:bg-accent/50 flex items-center justify-between" onClick={handleToggle}>
           <div className="flex items-center gap-3">
             <CollapsibleTrigger asChild>
               <button className="flex items-center">
-                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {propIsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </button>
             </CollapsibleTrigger>
             <div>

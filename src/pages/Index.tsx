@@ -45,6 +45,17 @@ const EmailListView = ({
 }) => {
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   
+  // Handle opening an email - this will close any previously open email
+  const handleOpenEmail = (emailId: string) => {
+    // If clicking on the already open email, close it
+    if (selectedEmailId === emailId) {
+      setSelectedEmailId(null);
+    } else {
+      // Otherwise, open the clicked email (which closes any previously open one)
+      setSelectedEmailId(emailId);
+    }
+  };
+  
   return (
     <div>
       <StatsCards />
@@ -64,7 +75,7 @@ const EmailListView = ({
               email={thread.originalEmail} 
               replies={thread.replies}
               isOpen={selectedEmailId === thread.originalEmail.id}
-              onOpen={setSelectedEmailId}
+              onOpen={handleOpenEmail}
               onReplySent={refetch}
             />
           ))
