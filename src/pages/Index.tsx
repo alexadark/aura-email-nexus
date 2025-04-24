@@ -90,7 +90,7 @@ const CRMView = () => {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   
   // Fetch leads from Supabase
-  const { data: leads = [], isLoading } = useQuery({
+  const { data: allLeads = [], isLoading } = useQuery({
     queryKey: ['leads'],
     queryFn: async () => {
       try {
@@ -122,6 +122,9 @@ const CRMView = () => {
       }
     }
   });
+  
+  // Filter out leads of type "system"
+  const leads = allLeads.filter(lead => lead.type?.toLowerCase() !== 'system');
   
   // Function to handle lead selection
   const handleSelectLead = (lead: Lead) => {
