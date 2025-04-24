@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Check, X, Send, CornerDownLeft, Edit, ChevronDown, ChevronRight } from 'lucide-react';
@@ -80,18 +81,17 @@ export default function EmailCard({
       ? format(new Date(email.created_at), 'MMM d, yyyy h:mm a')
       : '';
 
-  // Sort the messages chronologically by timestamp
+  // Sort the messages chronologically by timestamp based on message direction
   const sortedMessages = [email, ...replies].sort((a, b) => {
-    const dateA = a.received_at 
-      ? new Date(a.received_at).getTime() 
-      : a.created_at 
-        ? new Date(a.created_at).getTime() 
-        : 0;
-    const dateB = b.received_at 
-      ? new Date(b.received_at).getTime() 
-      : b.created_at 
-        ? new Date(b.created_at).getTime() 
-        : 0;
+    // For incoming messages, use received_at; for outgoing, use created_at
+    const dateA = a.direction === 'incoming' 
+      ? (a.received_at ? new Date(a.received_at).getTime() : 0)
+      : (a.created_at ? new Date(a.created_at).getTime() : 0);
+    
+    const dateB = b.direction === 'incoming'
+      ? (b.received_at ? new Date(b.received_at).getTime() : 0)
+      : (b.created_at ? new Date(b.created_at).getTime() : 0);
+    
     return dateA - dateB;
   });
 
@@ -141,9 +141,9 @@ export default function EmailCard({
                         {msg.sender_name || 'Unknown'}
                       </h4>
                       <span className="ml-auto text-xs text-muted-foreground">
-                        {msg.received_at
+                        {msg.direction === 'incoming' && msg.received_at
                           ? format(new Date(msg.received_at), 'h:mm a')
-                          : msg.created_at
+                          : msg.direction === 'outgoing' && msg.created_at
                             ? format(new Date(msg.created_at), 'h:mm a')
                             : ''}
                       </span>
