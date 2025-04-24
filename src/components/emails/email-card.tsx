@@ -81,9 +81,18 @@ export default function EmailCard({
       ? format(new Date(email.created_at), 'MMM d, yyyy h:mm a')
       : '';
 
-  // Sort the messages chronologically by timestamp based on message direction
+  // First organize messages by ensuring original email is first, then sort by timestamp
+  // This ensures original emails and their replies are properly grouped chronologically
   const sortedMessages = [email, ...replies].sort((a, b) => {
-    // For incoming messages, use received_at; for outgoing, use created_at
+    // First, prioritize the original email at the top
+    if (a.type === 'original' && b.type !== 'original') {
+      return -1;
+    }
+    if (a.type !== 'original' && b.type === 'original') {
+      return 1;
+    }
+    
+    // Then sort by timestamp based on direction
     const dateA = a.direction === 'incoming' 
       ? (a.received_at ? new Date(a.received_at).getTime() : 0)
       : (a.created_at ? new Date(a.created_at).getTime() : 0);
