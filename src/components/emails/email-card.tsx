@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Check, X, Send, CornerDownLeft, Edit, ChevronDown, ChevronRight } from 'lucide-react';
@@ -81,6 +80,21 @@ export default function EmailCard({
       ? format(new Date(email.created_at), 'MMM d, yyyy h:mm a')
       : '';
 
+  // Sort the messages chronologically by timestamp
+  const sortedMessages = [email, ...replies].sort((a, b) => {
+    const dateA = a.received_at 
+      ? new Date(a.received_at).getTime() 
+      : a.created_at 
+        ? new Date(a.created_at).getTime() 
+        : 0;
+    const dateB = b.received_at 
+      ? new Date(b.received_at).getTime() 
+      : b.created_at 
+        ? new Date(b.created_at).getTime() 
+        : 0;
+    return dateA - dateB;
+  });
+
   return (
     <Card className={cn(
       'mb-4 email-card border-l-4 transition-all',
@@ -109,7 +123,7 @@ export default function EmailCard({
         <CollapsibleContent>
           <CardContent className="p-4 pt-0">
             <div className="flex flex-col gap-6">
-              {[email, ...replies].map((msg) =>
+              {sortedMessages.map((msg) =>
                 msg.status === 'draft' && msg.direction === 'outgoing' && msg.type === 'reply' ? (
                   <EmailDraft key={msg.id} email={msg} onReplySent={onReplySent} />
                 ) : (
