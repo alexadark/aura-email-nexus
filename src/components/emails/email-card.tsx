@@ -86,13 +86,14 @@ export default function EmailCard({
       'mb-4 email-card border-l-4 transition-all',
       isOpen ? 'border-l-primary' : 'border-l-transparent'
     )}>
-      <CollapsibleTrigger
-        asChild
-        onClick={handleToggle}
-      >
-        <div className="p-4 cursor-pointer hover:bg-accent/50 flex items-center justify-between">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <div className="p-4 cursor-pointer hover:bg-accent/50 flex items-center justify-between" onClick={handleToggle}>
           <div className="flex items-center gap-3">
-            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center">
+                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+            </CollapsibleTrigger>
             <div>
               <div className="font-medium">{email.sender_name || 'Unknown'}</div>
               <div className="text-sm text-muted-foreground truncate max-w-[600px]">
@@ -104,9 +105,7 @@ export default function EmailCard({
             {formattedDate}
           </div>
         </div>
-      </CollapsibleTrigger>
 
-      <Collapsible open={isOpen}>
         <CollapsibleContent>
           <CardContent className="p-4 pt-0">
             <div className="flex flex-col gap-6">
